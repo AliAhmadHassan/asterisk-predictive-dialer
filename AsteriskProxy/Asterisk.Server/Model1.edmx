@@ -1,0 +1,160 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="2.0" xmlns:edmx="http://schemas.microsoft.com/ado/2008/10/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+      <Schema Namespace="silverModel.Store" Alias="Self" Provider="MySql.Data.MySqlClient" ProviderManifestToken="5.1" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns="http://schemas.microsoft.com/ado/2009/02/edm/ssdl">
+        <EntityContainer Name="silverModelStoreContainer">
+          <EntitySet Name="bilhetagem" EntityType="silverModel.Store.bilhetagem" store:Type="Tables" Schema="silver" />
+        </EntityContainer>
+        <EntityType Name="bilhetagem">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="uint" Nullable="false" StoreGeneratedPattern="Identity" />
+          <Property Name="calldate" Type="datetime" Nullable="false" />
+          <Property Name="clid" Type="varchar" Nullable="false" MaxLength="80" />
+          <Property Name="src" Type="varchar" Nullable="false" MaxLength="80" />
+          <Property Name="dst" Type="varchar" Nullable="false" MaxLength="80" />
+          <Property Name="dcontext" Type="varchar" Nullable="false" MaxLength="80" />
+          <Property Name="channel" Type="varchar" Nullable="false" MaxLength="80" />
+          <Property Name="dstchannel" Type="varchar" Nullable="false" MaxLength="80" />
+          <Property Name="lastapp" Type="varchar" Nullable="false" MaxLength="80" />
+          <Property Name="lastdata" Type="varchar" Nullable="false" MaxLength="80" />
+          <Property Name="duration" Type="int" Nullable="false" />
+          <Property Name="billsec" Type="int" Nullable="false" />
+          <Property Name="disposition" Type="varchar" Nullable="false" MaxLength="45" />
+          <Property Name="amaflags" Type="int" Nullable="false" />
+          <Property Name="accountcode" Type="varchar" Nullable="false" MaxLength="20" />
+          <Property Name="userfield" Type="varchar" Nullable="false" MaxLength="255" />
+          <Property Name="uniqueid" Type="varchar" Nullable="false" MaxLength="32" />
+          <Property Name="linkedid" Type="varchar" Nullable="false" MaxLength="32" />
+          <Property Name="sequence" Type="varchar" Nullable="false" MaxLength="32" />
+          <Property Name="peeraccount" Type="varchar" Nullable="false" MaxLength="32" />
+          <Property Name="amd" Type="bool" />
+          <Property Name="amdtype" Type="int" />
+          <Property Name="otiosetime" Type="int" />
+          <Property Name="callanalyzed" Type="bool" />
+          <Property Name="recordingpath" Type="varchar" MaxLength="255" />
+          <Property Name="end" Type="datetime" Nullable="false" />
+          <Property Name="idtelefone" Type="uint" Nullable="false" />
+          <Property Name="tipotelefone" Type="uint" Nullable="false" />
+          <Property Name="AMDSTATUS" Type="varchar" MaxLength="45" />
+          <Property Name="idcampanha" Type="int" />
+          <Property Name="pathgravacao" Type="varchar" MaxLength="500" />
+        </EntityType>
+      </Schema>
+    </edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="silverModel" Alias="Self" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
+        <EntityContainer Name="silverEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="bilhetagem" EntityType="silverModel.bilhetagem" />
+        </EntityContainer>
+        <EntityType Name="bilhetagem">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int64" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="calldate" Type="DateTime" Nullable="false" />
+          <Property Name="clid" Type="String" Nullable="false" />
+          <Property Name="src" Type="String" Nullable="false" />
+          <Property Name="dst" Type="String" Nullable="false" />
+          <Property Name="dcontext" Type="String" Nullable="false" />
+          <Property Name="channel" Type="String" Nullable="false" />
+          <Property Name="dstchannel" Type="String" Nullable="false" />
+          <Property Name="lastapp" Type="String" Nullable="false" />
+          <Property Name="lastdata" Type="String" Nullable="false" />
+          <Property Name="duration" Type="Int32" Nullable="false" />
+          <Property Name="billsec" Type="Int32" Nullable="false" />
+          <Property Name="disposition" Type="String" Nullable="false" />
+          <Property Name="amaflags" Type="Int32" Nullable="false" />
+          <Property Name="accountcode" Type="String" Nullable="false" />
+          <Property Name="userfield" Type="String" Nullable="false" />
+          <Property Name="uniqueid" Type="String" Nullable="false" />
+          <Property Name="linkedid" Type="String" Nullable="false" />
+          <Property Name="sequence" Type="String" Nullable="false" />
+          <Property Name="peeraccount" Type="String" Nullable="false" />
+          <Property Name="amd" Type="Boolean" />
+          <Property Name="amdtype" Type="Int32" />
+          <Property Name="otiosetime" Type="Int32" />
+          <Property Name="callanalyzed" Type="Boolean" />
+          <Property Name="recordingpath" Type="String" />
+          <Property Name="end" Type="DateTime" Nullable="false" />
+          <Property Name="idtelefone" Type="Int64" Nullable="false" />
+          <Property Name="tipotelefone" Type="Int64" Nullable="false" />
+          <Property Name="AMDSTATUS" Type="String" />
+          <Property Name="idcampanha" Type="Int32" />
+          <Property Name="pathgravacao" Type="String" />
+        </EntityType>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2008/09/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="silverModelStoreContainer" CdmEntityContainer="silverEntities">
+          <EntitySetMapping Name="bilhetagem">
+            <EntityTypeMapping TypeName="silverModel.bilhetagem">
+              <MappingFragment StoreEntitySet="bilhetagem">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="calldate" ColumnName="calldate" />
+                <ScalarProperty Name="clid" ColumnName="clid" />
+                <ScalarProperty Name="src" ColumnName="src" />
+                <ScalarProperty Name="dst" ColumnName="dst" />
+                <ScalarProperty Name="dcontext" ColumnName="dcontext" />
+                <ScalarProperty Name="channel" ColumnName="channel" />
+                <ScalarProperty Name="dstchannel" ColumnName="dstchannel" />
+                <ScalarProperty Name="lastapp" ColumnName="lastapp" />
+                <ScalarProperty Name="lastdata" ColumnName="lastdata" />
+                <ScalarProperty Name="duration" ColumnName="duration" />
+                <ScalarProperty Name="billsec" ColumnName="billsec" />
+                <ScalarProperty Name="disposition" ColumnName="disposition" />
+                <ScalarProperty Name="amaflags" ColumnName="amaflags" />
+                <ScalarProperty Name="accountcode" ColumnName="accountcode" />
+                <ScalarProperty Name="userfield" ColumnName="userfield" />
+                <ScalarProperty Name="uniqueid" ColumnName="uniqueid" />
+                <ScalarProperty Name="linkedid" ColumnName="linkedid" />
+                <ScalarProperty Name="sequence" ColumnName="sequence" />
+                <ScalarProperty Name="peeraccount" ColumnName="peeraccount" />
+                <ScalarProperty Name="amd" ColumnName="amd" />
+                <ScalarProperty Name="amdtype" ColumnName="amdtype" />
+                <ScalarProperty Name="otiosetime" ColumnName="otiosetime" />
+                <ScalarProperty Name="callanalyzed" ColumnName="callanalyzed" />
+                <ScalarProperty Name="recordingpath" ColumnName="recordingpath" />
+                <ScalarProperty Name="end" ColumnName="end" />
+                <ScalarProperty Name="idtelefone" ColumnName="idtelefone" />
+                <ScalarProperty Name="tipotelefone" ColumnName="tipotelefone" />
+                <ScalarProperty Name="AMDSTATUS" ColumnName="AMDSTATUS" />
+                <ScalarProperty Name="idcampanha" ColumnName="idcampanha" />
+                <ScalarProperty Name="pathgravacao" ColumnName="pathgravacao" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2008/10/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="False" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="True" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="None" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams>
+      <Diagram Name="Model1" ZoomLevel="74">
+        <EntityTypeShape EntityType="silverModel.bilhetagem" Width="1.5" PointX="0.75" PointY="0.75" Height="6.9801236979166656" IsExpanded="true" />
+      </Diagram>
+    </Diagrams>
+  </Designer>
+</edmx:Edmx>

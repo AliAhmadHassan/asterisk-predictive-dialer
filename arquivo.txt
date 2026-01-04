@@ -1,0 +1,56 @@
+OK - [Log de uso dos E1's]
+Montar tela de quadradinhos para monstrar no sistema o comando "dgv show channels {1/3}"
+
+OK - [Log de status do Usuario]
+Montar lista com o comando "Queue show {Uol/Banco Votorantim}", onde o status é diferenciado por cores e o tempo como hh:mm:ss
+
+OK - [Tela não estava cadastrada][Tela de definição de Rotas]
+Não encontrei no menu a tela de Definição de Rotas.
+
+[OBS - 1]
+Para os casos em que o site e o discador estiverem em máquinas separadas, o diretório onde o site colocar as cargas deve ser um diretório compartilhado na rede
+
+[Ramal Disconectado]
+Verificar uma forma para detectar os ramal desconectados do asterisk e noficiar o operador ou supervisor
+
+[Carga]
+OK Histórico de carga, Data e Hora, Operador,Campanha, Observação, nome do arquivo, tamanho , considerar campo sobre do que se trata a carga.
+
+[Dashboard]
+Considerar exibição do dashboard por carga ou periodo e não apenas por campanha
+
+[Dashboard]
+Exibir apenas cargas ativas no menu cargas da tela
+
+[Dashboard]
+Colocar opção marcar todos no menu da carga.
+
+[Dashboard]
+OK - Menu Opções da campanha está abrindo o link 'Histórico de solicitações' errado.
+
+[Pagina]
+Desenvolver tela de visualização, histórico e relatório analitico de carga antiga
+
+[Carga]
+Desenvolver forma de enfileiramento de cargas, dando caracteristicas de continuidade
+
+[Robô Discagem]
+Continuar execução do robo caso exista mailing na base.
+Atualizar todos os outros telefones da carga que foi atendida
+
+[Robô Discagem]
+OK - Identificar quando o discador finalizar a discagem para remover o processo do Servidor Silver
+
+[Carga]
+OK - Ordenar grade do histórico do maior para o menor
+
+[Servidor-Desktop]
+Por vezes o aplicativo de escuta do asterisk não inicia com a solicitação remota.
+
+[Web]
+Esporadicamente ocorre um erro que estoura o limite de processamento da máquina.
+
+[Servidor]
+Verificar
+
+

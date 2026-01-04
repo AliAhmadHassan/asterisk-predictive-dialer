@@ -1,0 +1,50 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using NUnit.Framework;
+
+namespace Silver.BLL
+{
+    /// <summary>
+    /// Classe Responsavel por Testar a classe 'Campanha'
+    /// Dedesevolvida por: Francisco Silva
+    ///              Data: 09/08/2013
+    /// </summary>
+    [TestFixture()]
+    public class Campanha_Teste
+    {
+        private Campanha campanha_teste = new Campanha();
+
+        [Test()]
+        public void Listar()
+        {
+            Assert.AreEqual(0, 0);
+            throw new InvalidProgramException();
+        }
+
+        [Test()]
+        public void Obter()
+        {
+            Assert.AreEqual(0, 0);
+        }
+
+        [Test()]
+        public void Buscar()
+        {
+            Assert.AreEqual(0, 0);
+        }
+
+        [Test()]
+        public void Cadastrar()
+        {
+            Assert.AreEqual(1, 0);
+        }
+
+        [Test()]
+        public void Ativar()
+        {
+            Assert.AreEqual(0, 0);
+        }
+    }
+}

@@ -1,0 +1,941 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>
+    </ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{46E75CBD-41FD-40A7-ACD1-5FA7776E7872}</ProjectGuid>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Silver.UI.Web.Presentation</RootNamespace>
+    <AssemblyName>Silver.UI.Web.Presentation</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <UseIISExpress>true</UseIISExpress>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>4.0</OldToolsVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <CodeAnalysisLogFile>bin\Silver.UI.Web.Presentation.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
+    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
+    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
+    <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <OutputPath>bin\x86\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <CodeAnalysisLogFile>bin\Silver.UI.Web.Presentation.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
+    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
+    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+    <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="AjaxControlToolkit, Version=4.1.7.429, Culture=neutral, PublicKeyToken=28f01b0e84b6d53e, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Dependencias\Ajax\AjaxControlToolkit.dll</HintPath>
+    </Reference>
+    <Reference Include="Chat">
+      <HintPath>..\Dependencias\Chat.dll</HintPath>
+    </Reference>
+    <Reference Include="DotNet.Highcharts">
+      <HintPath>..\Dependencias\DotNet.Highcharts.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Web.DynamicData" />
+    <Reference Include="System.Web.Entity" />
+    <Reference Include="System.Web.ApplicationServices" />
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.EnterpriseServices" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="App_Themes\Default\Default.css" />
+    <Content Include="App_Themes\Default\images\animated-overlay.gif" />
+    <Content Include="App_Themes\Default\images\down_arrow_select.jpg" />
+    <Content Include="App_Themes\Default\images\ui-bg_diagonals-thick_90_eeeeee_40x40.png" />
+    <Content Include="App_Themes\Default\images\ui-bg_flat_15_cd0a0a_40x100.png" />
+    <Content Include="App_Themes\Default\images\ui-bg_glass_100_e4f1fb_1x400.png" />
+    <Content Include="App_Themes\Default\images\ui-bg_glass_50_3baae3_1x400.png" />
+    <Content Include="App_Themes\Default\images\ui-bg_glass_80_d7ebf9_1x400.png" />
+    <Content Include="App_Themes\Default\images\ui-bg_highlight-hard_100_f2f5f7_1x100.png" />
+    <Content Include="App_Themes\Default\images\ui-bg_highlight-hard_70_000000_1x100.png" />
+    <Content Include="App_Themes\Default\images\ui-bg_highlight-soft_100_deedf7_1x100.png" />
+    <Content Include="App_Themes\Default\images\ui-bg_highlight-soft_25_ffef8f_1x100.png" />
+    <Content Include="App_Themes\Default\images\ui-icons_2694e8_256x240.png" />
+    <Content Include="App_Themes\Default\images\ui-icons_2e83ff_256x240.png" />
+    <Content Include="App_Themes\Default\images\ui-icons_3d80b3_256x240.png" />
+    <Content Include="App_Themes\Default\images\ui-icons_72a7cf_256x240.png" />
+    <Content Include="App_Themes\Default\images\ui-icons_ffffff_256x240.png" />
+    <Content Include="Carga\carga.txt" />
+    <Content Include="Default.aspx" />
+    <Content Include="Error.aspx" />
+    <Content Include="Global.asax" />
+    <Content Include="Imagens\clock.png" />
+    <Content Include="Imagens\mailing_rel.png" />
+    <Content Include="Imagens\admin.png" />
+    <Content Include="Imagens\ajax-loader-operador.gif" />
+    <Content Include="Imagens\ajax-loader.gif" />
+    <Content Include="Imagens\ajuda.png" />
+    <Content Include="Imagens\Alarm.png" />
+    <Content Include="Imagens\Application-32.png" />
+    <Content Include="Imagens\bg_header.png" />
+    <Content Include="Imagens\bg_header2.png" />
+    <Content Include="Imagens\bg_header_3.png" />
+    <Content Include="Imagens\ChannelOffline.png" />
+    <Content Include="Imagens\ChannelOnline.png" />
+    <Content Include="Imagens\computer.png" />
+    <Content Include="Imagens\connect.png" />
+    <Content Include="Imagens\dash_confirmar.png" />
+    <Content Include="Imagens\cllipboard.png" />
+    <Content Include="Imagens\Close-icon3.png" />
+    <Content Include="Imagens\carga_historico.gif" />
+    <Content Include="Imagens\carga_carga.gif" />
+    <Content Include="Imagens\dash_delete.png" />
+    <Content Include="Imagens\dash_close.png" />
+    <Content Include="Imagens\database_export.gif" />
+    <Content Include="Imagens\delete.png" />
+    <Content Include="Imagens\E1.png" />
+    <Content Include="Imagens\edit.png" />
+    <Content Include="Imagens\dash_group.png" />
+    <Content Include="Imagens\Grupo.png" />
+    <Content Include="Imagens\home.png" />
+    <Content Include="Imagens\homens-trabalhando.gif" />
+    <Content Include="Imagens\Ico\bank_cards.png" />
+    <Content Include="Imagens\Ico\bookmark.png" />
+    <Content Include="Imagens\Ico\control_play.png" />
+    <Content Include="Imagens\Ico\group.png" />
+    <Content Include="Imagens\Ico\iniciar.png" />
+    <Content Include="Imagens\Ico\continuar.png" />
+    <Content Include="Imagens\Ico\parar.png" />
+    <Content Include="Imagens\Ico\refresh_16x16.gif" />
+    <Content Include="Imagens\Ico\wallet.png" />
+    <Content Include="Imagens\Login-50.png" />
+    <Content Include="Imagens\Login-60-2.png" />
+    <Content Include="Imagens\Login-60.png" />
+    <Content Include="Imagens\Login.png" />
+    <Content Include="Imagens\logout.png" />
+    <Content Include="Imagens\Ico\grid_atualizar.png" />
+    <Content Include="Imagens\Ico\grid_editar.png" />
+    <Content Include="Imagens\Ico\grid_deletar.png" />
+    <Content Include="Imagens\back-icon.png" />
+    <Content Include="Imagens\bg.png" />
+    <Content Include="Imagens\bg_botao.png" />
+    <Content Include="Imagens\bg_buscar.png" />
+    <Content Include="Imagens\buscar-form.png" />
+    <Content Include="Imagens\buscar.png" />
+    <Content Include="Imagens\Cadastro.png" />
+    <Content Include="Imagens\Cancel.png" />
+    <Content Include="Imagens\Close-icon.png" />
+    <Content Include="Imagens\Close-icon2.png" />
+    <Content Include="Imagens\Configuration.png" />
+    <Content Include="Imagens\DashBoard.png" />
+    <Content Include="Imagens\Disk.png" />
+    <Content Include="Imagens\informacao.png" />
+    <Content Include="Imagens\LinkCadastro.png" />
+    <Content Include="Imagens\loader.gif" />
+    <Content Include="Imagens\Logo.png" />
+    <Content Include="Imagens\Logo48.png" />
+    <Content Include="Imagens\logout_2.png" />
+    <Content Include="Imagens\logout_home.png" />
+    <Content Include="Imagens\log_out.png" />
+    <Content Include="Imagens\Mailing.png" />
+    <Content Include="Imagens\Menu.png" />
+    <Content Include="Imagens\MenuCad.png" />
+    <Content Include="Imagens\MenuConf.png" />
+    <Content Include="Imagens\MenuRel.png" />
+    <Content Include="Imagens\Msn-Buddy-Away-icon-128.png" />
+    <Content Include="Imagens\Msn-Buddy-Away-icon-48.png" />
+    <Content Include="Imagens\Msn-Buddy-Away-icon.png" />
+    <Content Include="Imagens\Msn-Buddy-Busy-icon-128.png" />
+    <Content Include="Imagens\Msn-Buddy-Busy-icon-48.png" />
+    <Content Include="Imagens\Msn-Buddy-Busy-icon.png" />
+    <Content Include="Imagens\Msn-Buddy-icon-128.png" />
+    <Content Include="Imagens\Msn-Buddy-icon-48.png" />
+    <Content Include="Imagens\Msn-Buddy-icon.png" />
+    <Content Include="Imagens\Msn-Buddy-mobile-icon-128.png" />
+    <Content Include="Imagens\Msn-Buddy-mobile-icon-48.png" />
+    <Content Include="Imagens\Msn-Buddy-mobile-icon.png" />
+    <Content Include="Imagens\Msn-Buddy-Offline-icon-128.png" />
+    <Content Include="Imagens\Msn-Buddy-Offline-icon-48.png" />
+    <Content Include="Imagens\Msn-Buddy-Offline-icon.png" />
+    <Content Include="Imagens\dash_grupo.png" />
+    <Content Include="Imagens\New.png" />
+    <Content Include="Imagens\ok.png" />
+    <Content Include="Imagens\Ok_32x32.png" />
+    <Content Include="Imagens\Operadora.png" />
+    <Content Include="Imagens\dash_config.png" />
+    <Content Include="Imagens\dash_paste.png" />
+    <Content Include="Imagens\Pausa.png" />
+    <Content Include="Imagens\process.png" />
+    <Content Include="Imagens\Report.png" />
+    <Content Include="Imagens\carga_telefone.gif" />
+    <Content Include="Imagens\reports-icon.png" />
+    <Content Include="Imagens\Rota.png" />
+    <Content Include="Imagens\salvar.png" />
+    <Content Include="Imagens\Save.png" />
+    <Content Include="Imagens\search-icon.png" />
+    <Content Include="Imagens\search.png" />
+    <Content Include="Imagens\Servidor.png" />
+    <Content Include="Imagens\shield_protect_off.png" />
+    <Content Include="Imagens\shield_protect_on.png" />
+    <Content Include="Imagens\Tarifa.png" />
+    <Content Include="Imagens\TarifaAlternativa.png" />
+    <Content Include="Imagens\Tarifas.png" />
+    <Content Include="Imagens\TarifaTipo.png" />
+    <Content Include="Imagens\Temp\10.png" />
+    <Content Include="Imagens\Temp\11.png" />
+    <Content Include="Imagens\Temp\12.png" />
+    <Content Include="Imagens\Temp\13.png" />
+    <Content Include="Imagens\Temp\14.png" />
+    <Content Include="Imagens\Temp\15.png" />
+    <Content Include="Imagens\Temp\16.png" />
+    <Content Include="Imagens\Temp\18.png" />
+    <Content Include="Imagens\Temp\21.png" />
+    <Content Include="Imagens\Temp\22.png" />
+    <Content Include="Imagens\Temp\23.png" />
+    <Content Include="Imagens\Temp\3.png" />
+    <Content Include="Imagens\Temp\4.png" />
+    <Content Include="Imagens\Temp\6.png" />
+    <Content Include="Imagens\Temp\7.png" />
+    <Content Include="Imagens\Temp\8.png" />
+    <Content Include="Imagens\Temp\9.png" />
+    <Content Include="Imagens\Temp\Campanhas.png" />
+    <Content Include="Imagens\Temp\DashBoard.png" />
+    <Content Include="Imagens\Temp\E1s.png" />
+    <Content Include="Imagens\Temp\Grupo.png" />
+    <Content Include="Imagens\Temp\Mailing.png" />
+    <Content Include="Imagens\Temp\Menu.png" />
+    <Content Include="Imagens\Temp\Operadoras.png" />
+    <Content Include="Imagens\Temp\Pausas.png" />
+    <Content Include="Imagens\Temp\Servidores.png" />
+    <Content Include="Imagens\Temp\Tarifas Altenativas.png" />
+    <Content Include="Imagens\Temp\Tarifas.png" />
+    <Content Include="Imagens\Temp\Tipo de Tarifas.png" />
+    <Content Include="Imagens\Temp\Usuário.png" />
+    <Content Include="Imagens\Wait-icon-128.png" />
+    <Content Include="Imagens\Wait-icon-32.png" />
+    <Content Include="Imagens\Wait-icon-48.png" />
+    <Content Include="Imagens\__search-icon.png" />
+    <Content Include="Imagens\signature-icon.png" />
+    <Content Include="Imagens\talk.png" />
+    <Content Include="Imagens\User2.png" />
+    <Content Include="Imagens\User.png" />
+    <Content Include="Imagens\voltar-menu.png" />
+    <Content Include="Imagens\voltar-p.png" />
+    <Content Include="Imagens\voltar.fw.png" />
+    <Content Include="Imagens\voltar.png" />
+    <Content Include="Js\jglowl\Gruntfile.js" />
+    <Content Include="App_Themes\Default\jquery.jgrowl.css" />
+    <Content Include="Js\jglowl\jquery.jgrowl.js" />
+    <Content Include="Js\jglowl\jquery.jgrowl.min.js" />
+    <Content Include="Js\jquery-2.0.0-vsdoc.js" />
+    <Content Include="Js\jquery.js" />
+    <Content Include="Js\jquery.maskedinput.js" />
+    <Content Include="Js\jquery.unobtrusive-ajax.js" />
+    <Content Include="Js\jquery.validate.js" />
+    <Content Include="Js\modernizr-2.6.2.js" />
+    <Content Include="Js\Plugs\checkstyle\jquery-1.9.1.min.js" />
+    <Content Include="Js\Plugs\checkstyle\prettyCheckable-blue.png" />
+    <Content Include="Js\Plugs\checkstyle\prettyCheckable-gray.png" />
+    <Content Include="Js\Plugs\checkstyle\prettyCheckable-green.png" />
+    <Content Include="Js\Plugs\checkstyle\prettyCheckable-red.png" />
+    <Content Include="Js\Plugs\checkstyle\prettyCheckable-yellow.png" />
+    <Content Include="Js\Plugs\checkstyle\prettyCheckable.css" />
+    <Content Include="Js\Plugs\checkstyle\prettyCheckable.js" />
+    <Content Include="Js\Plugs\jquery.ui\jquery-ui.js" />
+    <Content Include="Js\Plugs\Masked\jquery.masked.js" />
+    <Content Include="Js\Silver.Dock.js" />
+    <Content Include="Js\Silver.Common.js" />
+    <Content Include="Js\Silver.MensagemSistema.js" />
+    <Content Include="Js\Silver.Operador.js" />
+    <Content Include="Login.aspx" />
+    <Content Include="Logs\temp.htm" />
+    <Content Include="NotificacaoSistema.aspx" />
+    <Content Include="PageNotFound.aspx" />
+    <Content Include="Pages\AbrePopUp.aspx" />
+    <Content Include="Pages\Dashboard\Dashboard.aspx" />
+    <Content Include="Pages\Dashboard\Default.aspx" />
+    <Content Include="Pages\Dashboard\js\Dashboard.js" />
+    <Content Include="Pages\Dashboard\js\flexcroll.js" />
+    <Content Include="Pages\Dashboard\js\funnel.js" />
+    <Content Include="Pages\Dashboard\js\highcharts-more.js" />
+    <Content Include="Pages\Dashboard\js\highcharts.js" />
+    <Content Include="Pages\Dashboard\js\jquery.dataTables.min.js" />
+    <Content Include="Pages\Dashboard\js\jquery.min.js" />
+    <Content Include="Pages\Dashboard\js\jquery.multiselect.filter.js" />
+    <Content Include="Pages\Dashboard\js\jquery.multiselect.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery-ui-i18n.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-af.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-ar-DZ.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-ar.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-az.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-bg.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-bs.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-ca.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-cs.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-cy-GB.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-da.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-de.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-el.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-en-AU.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-en-GB.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-en-NZ.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-eo.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-es.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-et.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-eu.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-fa.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-fi.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-fo.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-fr-CH.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-fr.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-gl.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-he.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-hi.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-hr.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-hu.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-hy.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-id.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-is.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-it.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-ja.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-ka.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-kk.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-km.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-ko.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-lb.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-lt.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-lv.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-mk.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-ml.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-ms.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-nl-BE.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-nl.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-no.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-pl.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-pt-BR.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-pt.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-rm.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-ro.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-ru.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-sk.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-sl.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-sq.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-sr-SR.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-sr.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-sv.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-ta.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-th.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-tj.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-tr.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-uk.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-vi.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-zh-CN.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-zh-HK.js" />
+    <Content Include="Pages\Dashboard\js\ui\i18n\jquery.ui.datepicker-zh-TW.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery-ui.custom.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.accordion.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.autocomplete.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.button.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.core.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.datepicker.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.dialog.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.draggable.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.droppable.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.effect-blind.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.effect-bounce.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.effect-clip.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.effect-drop.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.effect-explode.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.effect-fade.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.effect-fold.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.effect-highlight.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.effect-pulsate.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.effect-scale.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.effect-shake.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.effect-slide.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.effect-transfer.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.effect.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.menu.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.mouse.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.position.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.progressbar.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.resizable.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.selectable.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.slider.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.sortable.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.spinner.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.tabs.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.tooltip.js" />
+    <Content Include="Pages\Dashboard\js\ui\jquery.ui.widget.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery-ui-i18n.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-af.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-ar-DZ.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-ar.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-az.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-bg.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-bs.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-ca.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-cs.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-cy-GB.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-da.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-de.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-el.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-en-AU.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-en-GB.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-en-NZ.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-eo.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-es.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-et.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-eu.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-fa.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-fi.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-fo.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-fr-CH.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-fr.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-gl.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-he.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-hi.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-hr.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-hu.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-hy.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-id.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-is.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-it.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-ja.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-ka.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-kk.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-km.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-ko.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-lb.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-lt.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-lv.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-mk.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-ml.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-ms.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-nl-BE.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-nl.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-no.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-pl.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-pt-BR.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-pt.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-rm.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-ro.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-ru.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-sk.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-sl.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-sq.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-sr-SR.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-sr.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-sv.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-ta.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-th.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-tj.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-tr.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-uk.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-vi.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-zh-CN.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-zh-HK.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\i18n\jquery.ui.datepicker-zh-TW.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery-ui.custom.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.accordion.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.autocomplete.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.button.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.core.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.datepicker.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.dialog.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.draggable.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.droppable.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.effect-blind.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.effect-bounce.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.effect-clip.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.effect-drop.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.effect-explode.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.effect-fade.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.effect-fold.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.effect-highlight.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.effect-pulsate.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.effect-scale.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.effect-shake.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.effect-slide.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.effect-transfer.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.effect.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.menu.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.mouse.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.position.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.progressbar.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.resizable.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.selectable.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.slider.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.sortable.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.spinner.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.tabs.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.tooltip.min.js" />
+    <Content Include="Pages\Dashboard\js\ui\minified\jquery.ui.widget.min.js" />
+    <Content Include="App_Themes\Default\Dashboard.css" />
+    <Content Include="Pages\Dashboard\style\Dashboard.css" />
+    <Content Include="Pages\Dashboard\style\flexcrollstyles.css" />
+    <Content Include="Pages\Dashboard\style\redmond\detalhes.png" />
+    <Content Include="Pages\Dashboard\style\redmond\images\animated-overlay.gif" />
+    <Content Include="Pages\Dashboard\style\redmond\images\ui-bg_flat_0_aaaaaa_40x100.png" />
+    <Content Include="Pages\Dashboard\style\redmond\images\ui-bg_flat_55_fbec88_40x100.png" />
+    <Content Include="Pages\Dashboard\style\redmond\images\ui-bg_glass_75_d0e5f5_1x400.png" />
+    <Content Include="Pages\Dashboard\style\redmond\images\ui-bg_glass_85_dfeffc_1x400.png" />
+    <Content Include="Pages\Dashboard\style\redmond\images\ui-bg_glass_95_fef1ec_1x400.png" />
+    <Content Include="Pages\Dashboard\style\redmond\images\ui-bg_gloss-wave_55_5c9ccc_500x100.png" />
+    <Content Include="Pages\Dashboard\style\redmond\images\ui-bg_inset-hard_100_f5f8f9_1x100.png" />
+    <Content Include="Pages\Dashboard\style\redmond\images\ui-bg_inset-hard_100_fcfdfd_1x100.png" />
+    <Content Include="Pages\Dashboard\style\redmond\images\ui-icons_217bc0_256x240.png" />
+    <Content Include="Pages\Dashboard\style\redmond\images\ui-icons_2e83ff_256x240.png" />
+    <Content Include="Pages\Dashboard\style\redmond\images\ui-icons_469bdd_256x240.png" />
+    <Content Include="Pages\Dashboard\style\redmond\images\ui-icons_6da8d5_256x240.png" />
+    <Content Include="Pages\Dashboard\style\redmond\images\ui-icons_cd0a0a_256x240.png" />
+    <Content Include="Pages\Dashboard\style\redmond\images\ui-icons_d8e7f3_256x240.png" />
+    <Content Include="Pages\Dashboard\style\redmond\images\ui-icons_f9bd01_256x240.png" />
+    <Content Include="Pages\Dashboard\style\redmond\jquery-ui.css" />
+    <Content Include="Pages\Dashboard\style\redmond\jquery.ui.all.css" />
+    <Content Include="Pages\Dashboard\style\redmond\jquery.ui.base.css" />
+    <Content Include="Pages\Dashboard\style\redmond\jquery.ui.core.css" />
+    <Content Include="Pages\Dashboard\style\redmond\jquery.ui.theme.css" />
+    <Content Include="Pages\Dashboard\style\redmond\locked.png" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\images\animated-overlay.gif" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\images\ui-bg_flat_0_aaaaaa_40x100.png" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\images\ui-bg_flat_55_fbec88_40x100.png" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\images\ui-bg_glass_75_d0e5f5_1x400.png" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\images\ui-bg_glass_85_dfeffc_1x400.png" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\images\ui-bg_glass_95_fef1ec_1x400.png" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\images\ui-bg_gloss-wave_55_5c9ccc_500x100.png" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\images\ui-bg_inset-hard_100_f5f8f9_1x100.png" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\images\ui-bg_inset-hard_100_fcfdfd_1x100.png" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\images\ui-icons_217bc0_256x240.png" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\images\ui-icons_2e83ff_256x240.png" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\images\ui-icons_469bdd_256x240.png" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\images\ui-icons_6da8d5_256x240.png" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\images\ui-icons_cd0a0a_256x240.png" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\images\ui-icons_d8e7f3_256x240.png" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\images\ui-icons_f9bd01_256x240.png" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\jquery-ui.min.css" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\jquery.ui.core.min.css" />
+    <Content Include="Pages\Dashboard\style\redmond\minified\jquery.ui.theme.min.css" />
+    <Content Include="Pages\Dashboard\style\redmond\setaD.png" />
+    <Content Include="Pages\Dashboard\style\redmond\setaE.png" />
+    <Content Include="Pages\Dashboard\style\redmond\unlocked.png" />
+    <Content Include="Pages\Dashboard\HistoricoRequisicao.aspx" />
+    <Content Include="Pages\Operador.aspx" />
+    <Content Include="Pages\Registers\Campanha.aspx" />
+    <Content Include="Pages\Registers\Carga.aspx" />
+    <Content Include="Pages\Registers\ConsultaGravacao.aspx" />
+    <Content Include="Pages\Registers\Dashboard.aspx" />
+    <Content Include="Pages\Registers\DownloadGravacao.aspx" />
+    <Content Include="Pages\Registers\E1.aspx" />
+    <Content Include="Pages\Registers\Grupo.aspx" />
+    <Content Include="Pages\Registers\Menu.aspx" />
+    <Content Include="Pages\Registers\Operadora.aspx" />
+    <Content Include="Pages\Registers\Pausa.aspx" />
+    <Content Include="Pages\Registers\Rota.aspx" />
+    <Content Include="Pages\Registers\Servidor.aspx" />
+    <Content Include="Pages\Registers\Tarifa.aspx" />
+    <Content Include="Pages\Registers\TarifaAlternativa.aspx" />
+    <Content Include="Pages\Registers\Tarifacao.aspx" />
+    <Content Include="Pages\Registers\TarifaRegra.aspx" />
+    <Content Include="Pages\Registers\TarifaTipo.aspx" />
+    <Content Include="Pages\Reports\RelCampanha.aspx" />
+    <Content Include="Pages\Reports\RelChannels.aspx" />
+    <Content Include="Requests\RequestChecking.aspx" />
+    <Content Include="Requests\Requests.aspx" />
+    <Content Include="Sounds\Campanha\Anuncio\musica.mp3" />
+    <Content Include="Sounds\Campanha\Musica\musica.mp3" />
+    <Content Include="Styles\Silver.Login.css" />
+    <Content Include="Styles\Silver.Mensagem.css" />
+    <Content Include="Styles\Silver.Operador.css" />
+    <Content Include="Pages\Registers\Usuario.aspx" />
+    <Content Include="UserControls\img\scv.png" />
+    <Content Include="UserControls\ucUsuario.ascx" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="Web.Debug.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </Content>
+    <Content Include="Web.Release.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Default.aspx.cs">
+      <DependentUpon>Default.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Default.aspx.designer.cs">
+      <DependentUpon>Default.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Default.Master.cs">
+      <DependentUpon>Default.Master</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Default.Master.designer.cs">
+      <DependentUpon>Default.Master</DependentUpon>
+    </Compile>
+    <Compile Include="Error.aspx.cs">
+      <DependentUpon>Error.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Error.aspx.designer.cs">
+      <DependentUpon>Error.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Global.asax.cs">
+      <DependentUpon>Global.asax</DependentUpon>
+    </Compile>
+    <Compile Include="Login.aspx.cs">
+      <DependentUpon>Login.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Login.aspx.designer.cs">
+      <DependentUpon>Login.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="NotificacaoSistema.aspx.cs">
+      <DependentUpon>NotificacaoSistema.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="NotificacaoSistema.aspx.designer.cs">
+      <DependentUpon>NotificacaoSistema.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="PageNotFound.aspx.cs">
+      <DependentUpon>PageNotFound.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="PageNotFound.aspx.designer.cs">
+      <DependentUpon>PageNotFound.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\AbrePopUp.aspx.cs">
+      <DependentUpon>AbrePopUp.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\AbrePopUp.aspx.designer.cs">
+      <DependentUpon>AbrePopUp.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Dashboard\Dashboard.aspx.cs">
+      <DependentUpon>Dashboard.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Dashboard\Dashboard.aspx.designer.cs">
+      <DependentUpon>Dashboard.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Dashboard\Default.aspx.cs">
+      <DependentUpon>Default.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Dashboard\Default.aspx.designer.cs">
+      <DependentUpon>Default.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Dashboard\Tree.cs" />
+    <Compile Include="Pages\Dashboard\HistoricoRequisicao.aspx.cs">
+      <DependentUpon>HistoricoRequisicao.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Dashboard\HistoricoRequisicao.aspx.designer.cs">
+      <DependentUpon>HistoricoRequisicao.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Helper.ashx.cs">
+      <DependentUpon>Helper.ashx</DependentUpon>
+    </Compile>
+    <Compile Include="NotificacaoSistema.ashx.cs">
+      <DependentUpon>NotificacaoSistema.ashx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\PaginaBase.cs">
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Operador.aspx.cs">
+      <DependentUpon>Operador.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Operador.aspx.designer.cs">
+      <DependentUpon>Operador.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Registers\Campanha.aspx.cs">
+      <DependentUpon>Campanha.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Registers\Campanha.aspx.designer.cs">
+      <DependentUpon>Campanha.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Registers\Carga.aspx.cs">
+      <DependentUpon>Carga.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Registers\Carga.aspx.designer.cs">
+      <DependentUpon>Carga.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Registers\ConsultaGravacao.aspx.cs">
+      <DependentUpon>ConsultaGravacao.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Registers\ConsultaGravacao.aspx.designer.cs">
+      <DependentUpon>ConsultaGravacao.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Registers\Dashboard.aspx.cs">
+      <DependentUpon>Dashboard.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Registers\Dashboard.aspx.designer.cs">
+      <DependentUpon>Dashboard.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Registers\DownloadGravacao.aspx.cs">
+      <DependentUpon>DownloadGravacao.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Registers\DownloadGravacao.aspx.designer.cs">
+      <DependentUpon>DownloadGravacao.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Registers\E1.aspx.cs">
+      <DependentUpon>E1.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Registers\E1.aspx.designer.cs">
+      <DependentUpon>E1.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Registers\Grupo.aspx.cs">
+      <DependentUpon>Grupo.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Registers\Grupo.aspx.designer.cs">
+      <DependentUpon>Grupo.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Registers\Menu.aspx.cs">
+      <DependentUpon>Menu.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Registers\Menu.aspx.designer.cs">
+      <DependentUpon>Menu.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Registers\Operadora.aspx.cs">
+      <DependentUpon>Operadora.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Registers\Operadora.aspx.designer.cs">
+      <DependentUpon>Operadora.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Registers\Pausa.aspx.cs">
+      <DependentUpon>Pausa.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Registers\Pausa.aspx.designer.cs">
+      <DependentUpon>Pausa.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Registers\Rota.aspx.cs">
+      <DependentUpon>Rota.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Registers\Rota.aspx.designer.cs">
+      <DependentUpon>Rota.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Registers\Servidor.aspx.cs">
+      <DependentUpon>Servidor.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Registers\Servidor.aspx.designer.cs">
+      <DependentUpon>Servidor.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Registers\Tarifa.aspx.cs">
+      <DependentUpon>Tarifa.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Registers\Tarifa.aspx.designer.cs">
+      <DependentUpon>Tarifa.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Registers\TarifaAlternativa.aspx.cs">
+      <DependentUpon>TarifaAlternativa.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Registers\TarifaAlternativa.aspx.designer.cs">
+      <DependentUpon>TarifaAlternativa.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Registers\Tarifacao.aspx.cs">
+      <DependentUpon>Tarifacao.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Registers\Tarifacao.aspx.designer.cs">
+      <DependentUpon>Tarifacao.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Registers\TarifaRegra.aspx.cs">
+      <DependentUpon>TarifaRegra.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Registers\TarifaRegra.aspx.designer.cs">
+      <DependentUpon>TarifaRegra.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Registers\TarifaTipo.aspx.cs">
+      <DependentUpon>TarifaTipo.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Registers\TarifaTipo.aspx.designer.cs">
+      <DependentUpon>TarifaTipo.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Reports\RelCampanha.aspx.cs">
+      <DependentUpon>RelCampanha.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Reports\RelCampanha.aspx.designer.cs">
+      <DependentUpon>RelCampanha.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\Reports\RelChannels.aspx.cs">
+      <DependentUpon>RelChannels.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Reports\RelChannels.aspx.designer.cs">
+      <DependentUpon>RelChannels.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Pages\Registers\Usuario.aspx.cs">
+      <DependentUpon>Usuario.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Pages\Registers\Usuario.aspx.designer.cs">
+      <DependentUpon>Usuario.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Requests\RequestChecking.aspx.cs">
+      <DependentUpon>RequestChecking.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Requests\RequestChecking.aspx.designer.cs">
+      <DependentUpon>RequestChecking.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Requests\Requests.aspx.cs">
+      <DependentUpon>Requests.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Requests\Requests.aspx.designer.cs">
+      <DependentUpon>Requests.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Requests\UsuarioOnLine.cs" />
+    <Compile Include="UserControls\ucUsuario.ascx.cs">
+      <DependentUpon>ucUsuario.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="UserControls\ucUsuario.ascx.designer.cs">
+      <DependentUpon>ucUsuario.ascx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Chat\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Silver.AsteriskClient\Silver.AsteriskClient.csproj">
+      <Project>{F1E83356-42AE-4332-8FFC-9D5986351F2B}</Project>
+      <Name>Silver.AsteriskClient</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Silver.BLL\Silver.BLL.csproj">
+      <Project>{33A17419-E7D5-4F9E-A48C-7AEB217B9EA9}</Project>
+      <Name>Silver.BLL</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Silver.Common\Silver.Common.csproj">
+      <Project>{D5ED9466-7B35-4E69-AE29-218258E2E789}</Project>
+      <Name>Silver.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Silver.DTO\Silver.DTO.csproj">
+      <Project>{F992D3AF-D203-43BA-A06D-03F5D406F93E}</Project>
+      <Name>Silver.DTO</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Default.Master" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="App_Themes\Default\Default.skin" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Js\jglowl\.gitignore" />
+    <None Include="Js\jglowl\bower.json" />
+    <None Include="Js\jglowl\jgrowl.jquery.json" />
+    <None Include="Js\jglowl\jquery.jgrowl.map" />
+    <None Include="Js\jglowl\package.json" />
+    <None Include="Logs\LogSiteDiscadorSilver.Log" />
+    <None Include="Pages\Dashboard\style\redmond\images\Thumbs.db" />
+    <None Include="Pages\Dashboard\style\redmond\minified\images\Thumbs.db" />
+    <Content Include="Pages\Helper.ashx" />
+    <Content Include="NotificacaoSistema.ashx" />
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>False</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>60522</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>http://localhost:5054/</IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>False</UseCustomServer>
+          <CustomServerUrl>
+          </CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

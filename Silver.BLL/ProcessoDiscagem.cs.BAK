@@ -1,0 +1,269 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using Silver.DTO;
+using System.Configuration;
+using Silver.Common;
+using System.Threading.Tasks;
+
+namespace Silver.BLL
+{
+
+    /// <summary>
+    /// Classe utilizada para transportar dados do resumo da campanha
+    /// </summary>
+    public class ProcessosCampanhas
+    {
+        public ProcessosCampanhas()
+        {
+            ThreadResponsavel = new List<DTO.AcompanhamentoThread>();
+        }
+
+        public ProcessoDiscador Discador { get; set; }
+
+        public List<DTO.AcompanhamentoThread> ThreadResponsavel { get; set; }
+    }
+
+    /// <summary>
+    /// Classe de entrada do discador
+    /// </summary>
+    public static class ProcessoDiscagem
+    {
+        private static System.Timers.Timer timer_tabelacontrole;
+
+        private static object monitor_thread = new object();
+
+        public static event OutputLogs OnOutputlogs;
+
+        private static void Outputlogs(string msg)
+        {
+            if (OnOutputlogs != null)
+                OnOutputlogs(msg);
+        }
+
+        //public static AsteriskClient.ClienteAsterisk client_asterisk = BLL.SingletonClientAsterisk.Instance;
+
+        public static void Escutar()
+        {
+            //client_asterisk.Escutar();
+            BLL.SingletonClientAsterisk.EscutaIniciada = true;
+        }
+
+        public static List<ProcessosCampanhas> ProcessosCampanhasAtivos = new List<ProcessosCampanhas>();
+
+        private static ProcessosCampanhas ObterProcesso(string nome_campanha)
+        {
+            return ProcessosCampanhasAtivos.Where(c => c.Discador.Campanha.Nome.Equals(nome_campanha)).FirstOrDefault();
+        }
+
+        /// <summary>
+        /// 1 - Iniciar timer consulta da tabela de controle para solicitações via web
+        /// 2 - Verificar se a camapnha solicitada já está em execução, cancelar solicitação em caso verdadeiro
+        /// 3 - Criar intância da classe 'ProcessoDiscador' e configurar método de saida de logs para iniciar o discador definitivamente
+        /// 4 - Preparar Thread para o processo do discador e configurar com os dados da campanha
+        /// 5 - Incluir na propriedade 'ProcessosCampanhasAtivos' a campanha iniciada.
+        /// </summary>
+        /// <param name="id_campanha">campanha que deve iniciar</param>
+         public static void IniciarProcessoCampanha(long id_campanha)
+        {
+            #region Obsolete
+            //1 - Removido para a classe do dashboard
+            //if (timer_tabelacontrole == null)
+            //{
+            //    timer_tabelacontrole = new System.Timers.Timer(Convert.ToDouble(ConfigurationManager.AppSettings["application.tabelacontrole"]));
+            //    timer_tabelacontrole.Elapsed += timer_tabelacontrole_Elapsed;
+            //    timer_tabelacontrole.Start();
+            //} 
+            #endregion
+
+            //2
+            var processo = ProcessosCampanhasAtivos.Where(p => p.Discador.Campanha.Id.Equals(id_campanha)).FirstOrDefault();
+            if (processo != null)
+            {
+                ContinuarCampanha(processo.Discador.Campanha.Nome);
+                return;
+            }
+
+            //3
+            var discador = new ProcessoDiscador();
+            discador.OnOutputlogs += Outputlogs;
+
+            //Carregar Campanha solicitada
+            var campanha = new BLL.Campanha().Obter(id_campanha);
+
+            //4
+            discador.IniciarProcesso(campanha);
+            //Thread t1 = new Thread(new ParameterizedThreadStart(discador.IniciarProcesso));
+            //t1.Name = campanha.Nome;
+            //t1.Start(campanha);
+
+            //5
+            //var processos_campanhas = new ProcessosCampanhas();
+            //processos_campanhas.Discador = discador;
+            //processos_campanhas.ThreadResponsavel.Add(new AcompanhamentoThread() { Inicio = DateTime.Now, Termino = new DateTime(), ThreadContexto = t1 });
+
+            //ProcessosCampanhasAtivos.Add(processos_campanhas);
+        }
+
+        public static void ReiniciarServidor()
+        {
+            ProcessosCampanhasAtivos.Clear();
+        }
+
+        [Obsolete("Removido para a classe do dashboardo do discador")]
+        static void timer_tabelacontrole_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            try
+            {
+                var controle_sistema = Silver.BLL.ControleSistema.ListarControles();
+                foreach (var c in controle_sistema)
+                {
+                    var evento = (EventoControleSistema)Enum.Parse(typeof(EventoControleSistema), c.Evento);
+                    var processo = ObterProcesso(c.Valor);
+                    switch (evento)
+                    {
+                        case EventoControleSistema.Iniciar_Campanha:
+                            IniciarProcessoCampanha(c.Valor.ToInt64());
+                            break;
+                        case EventoControleSistema.Parar_Campanha:
+                            PausarCampanha(c.Valor);
+                            break;
+                        case EventoControleSistema.Continuar_Campanha:
+                            ContinuarCampanha(c.Valor);
+                            break;
+                        case EventoControleSistema.Recarregar_Campanha:
+                            processo.Discador.processoCampanha.InicializarOperadores();
+                            processo.Discador.processoCampanha.InicializarCarga();
+                            break;
+                        case EventoControleSistema.Recarregar_Carga:
+                        case EventoControleSistema.Recarregar_Telefone:
+                            processo.Discador.processoCampanha.InicializarCarga();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Outputlogs(ex.Message);
+            }
+        }
+
+        public static bool PausarCampanha(string nome_campanha)
+        {
+            var processo = ObterProcesso(nome_campanha);
+            if (processo != null)
+            {
+                processo.Discador.AtualizarStatus(DTO.StatusProcessoDiscador.Parado);
+                return true;
+            }
+            else
+                return false;
+
+        }
+
+        public static bool ContinuarCampanha(string nome_campanha)
+        {
+            var processo = ObterProcesso(nome_campanha);
+            if (processo != null)
+            {
+                processo.Discador.AtualizarStatus(DTO.StatusProcessoDiscador.Iniciado);
+                return true;
+            }
+            else
+                return false;
+
+        }
+
+        public static List<ResumoCampanha> ObterResumoCampanhas()
+        {
+            Monitor.Enter(monitor_thread);
+            var result = new List<ResumoCampanha>();
+            try
+            {
+                foreach (var item in ProcessosCampanhasAtivos)
+                {
+                    if (item.Discador != null)
+                    {
+                        if (item.Discador.processoCampanha != null)
+                        {
+                            if (item.Discador.processoCampanha.Cargas != null)
+                            {
+                                if (item.Discador.processoCampanha.Cargas.Count <= 0)
+                                    continue;
+                            }
+                            else continue;
+                        }
+                        else continue;
+                    }
+                    else continue;
+
+                    var r = new ResumoCampanha();
+                    r.Clientes = item.Discador.processoCampanha.Cargas.Count;
+                    r.Id = item.Discador.Campanha.Id;
+                    r.Nome = item.Discador.Campanha.Nome;
+                    r.Operadores = item.Discador.processoCampanha.Operadores.Count;
+                    r.Telefones = item.Discador.processoCampanha.Telefones.Count;
+                    r.Status = item.Discador.ObterStatus();
+                    r.TelefonesDiscados = TotalTelefonesDiscados(item.Discador.Campanha.Nome);
+                    r.ClientesDiscados = TotalClientesDiscados(item.Discador.Campanha.Nome);
+                    result.Add(r);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Outputlogs(string.Format("Falha ao tentar recuperar o resumo da campanha, mensagem do erro: {0}", ex.Message));
+                return result;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        public static int TotalClientesDiscados(string nome_campanha)
+        {
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                var processo = ObterProcesso(nome_campanha);
+                if (processo == null) return 0;
+
+                var cargas = processo.Discador.processoCampanha.Cargas.Where(t => t.Status > 0);
+                if (cargas != null)
+                    return cargas.Count();
+                else
+                    return 0;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        public static int TotalTelefonesDiscados(string nome_campanha)
+        {
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                var processo = ObterProcesso(nome_campanha);
+                if (processo == null) return 0;
+
+                var telefones = processo.Discador.processoCampanha.Telefones.Where(t => t.Status > 0).ToList();
+                if (telefones != null)
+                    return telefones.Count();
+                else
+                    return 0;
+            }
+            catch { return 0; }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+    }
+}

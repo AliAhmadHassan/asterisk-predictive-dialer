@@ -1,0 +1,69 @@
+﻿html, body
+{
+    margin: 0px;
+    padding: 0px;
+    width: 100%;
+    height: 100%;
+    left: 0px;
+    top: 0px;
+}
+
+#div_log
+{
+    overflow: hidden;
+    min-height: 500px;
+    width: 450px;
+}
+
+#div_log div
+{
+    min-height: 250px;
+}
+
+.lista_operador li
+{
+    font-size: 11px;
+    border-bottom: 1px solid #EFEFEF;
+    padding: 5px;
+    text-align: left;
+}
+
+.lista_operador li:hover
+{
+    background-color: #bcbfbf;
+    cursor: pointer;
+    -moz-box-shadow: 5px 5px 5px #878585;
+    -webkit-box-shadow: 5px 5px 5px #878585;
+    box-shadow: 5px 5px 5px #878585;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: capitalize;
+}
+
+.header
+{
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 130px;
+    background-color: #3e85ba;
+    border: 2px solid #d9dddd;
+    padding: 5px;
+    vertical-align: middle;
+    line-height: 130px;
+}
+
+.header span
+{
+    font-size: 25px;
+    margin-left: 20px;
+    font-weight: bold;
+    color: #EFEFEF;
+    font-family: Arial;
+    text-shadow: 2px 2px 2px #1a101a;
+    filter: dropshadow(color=#1a101a, offx=2, offy=2);
+}
+fieldset
+{
+    position: relative;
+}

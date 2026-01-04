@@ -1,0 +1,772 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Silver.AsteriskClient;
+using System.Threading;
+using System.Configuration;
+using System.Threading.Tasks;
+using System.Net;
+using Silver.DTO;
+
+namespace Silver.BLL
+{
+    public class RoboDiscagem : IDisposable
+    {
+        public RoboDiscagem()
+        {
+            Usuarios = new List<DTO.UsuarioRobo>();
+            Campanhas = new List<DTO.Campanha>();
+            Cargas = new List<DTO.Carga>();
+            Telefones = new List<DTO.CargaTelefoneRobo>();
+
+            //clienteAsterisk = IniciarComponente();
+        }
+
+        //TODO - Montar Robo de Pre-checagem
+        //TODO - Montar Metodo para Pausar o ROBO pela solicitação do Usuario
+        //TODO - Montar Controle do Inicio e Fim de funcionamento do ROBO (Ex: 08:00 ate 21:00 de Segunda ate Sexta) por Campanha
+
+        public event OutputLogs OnOutputLogs;
+
+        //private ClienteAsterisk clienteAsterisk;
+        private List<DTO.UsuarioRobo> Usuarios;
+        private List<DTO.Carga> Cargas;
+        private List<DTO.CargaTelefoneRobo> Telefones;
+        private List<DTO.Campanha> Campanhas;
+        private SortedList<Protocolo, int> OperadoraDDD = new SortedList<Protocolo, int>() {
+                                                                                    { Protocolo.Algar, 15 },
+                                                                                    { Protocolo.GVT, 15 },
+                                                                                    { Protocolo.Mahatel, 15 },
+                                                                                    { Protocolo.Nexus, 15 },
+                                                                                    { Protocolo.Pontal, 15 },
+                                                                                    { Protocolo.Telefonica, 15 },
+                                                                                    { Protocolo.Transit, 17 }};
+
+        public void Dispose()
+        {
+            //if (clienteAsterisk != null)
+            //{
+            //    clienteAsterisk.Dispose();
+            //    clienteAsterisk = null;
+            //}
+        }
+
+        private void clienteAsterisk_onRamaisStatus(List<RamalStatus> RamaisStatus)
+        {
+            try
+            {
+                foreach (RamalStatus ramalStatus in RamaisStatus)
+                {
+                    if (ramalStatus.Status == PeerStatus.Atendendo)
+                    {
+                        Usuarios.Where(c => c.Ramal.Equals(ramalStatus.Ramal)).FirstOrDefault().Status = DTO.EstadoUsuario.Atendimento;
+                        var msg = String.Format("{0} clienteAsterisk_onRamaisStatus\t\t{1}", DateTime.Now, ramalStatus.Ramal);
+                        Console.Out.WriteLine(msg);
+                        if (OnOutputLogs != null)
+                            OnOutputLogs(msg);
+                    }
+                }
+
+                //Discar para os Ramais que estão aguardando
+                DiscagemInicial();
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("[{0}] - Falha na execução do método onRamaisStatus. Mensagem: {1}", DateTime.Now, ex.Message));
+            }
+        }
+
+        private void clienteAsterisk_onQueueMember(long Ramal, string fila, QueueMemberStatus status)
+        {
+            try
+            {
+                if ((status == QueueMemberStatus.AST_DEVICE_UNKNOWN) || (status == QueueMemberStatus.AST_DEVICE_INVALID) || (status == QueueMemberStatus.AST_DEVICE_UNAVAILABLE))
+                    Usuarios.Where(c => c.Ramal.Equals(Ramal)).FirstOrDefault().Status = DTO.EstadoUsuario.Logoff;
+                else if ((status == QueueMemberStatus.AST_DEVICE_NOT_INUSE) || (status == QueueMemberStatus.AST_DEVICE_ONHOLD))
+                    Usuarios.Where(c => c.Ramal.Equals(Ramal)).FirstOrDefault().Status = DTO.EstadoUsuario.Aguardando;
+                else if ((status == QueueMemberStatus.AST_DEVICE_INUSE) || (status == QueueMemberStatus.AST_DEVICE_BUSY))
+                    Usuarios.Where(c => c.Ramal.Equals(Ramal)).FirstOrDefault().Status = DTO.EstadoUsuario.Atendimento;
+                else if ((status == QueueMemberStatus.AST_DEVICE_RINGING) || (status == QueueMemberStatus.AST_DEVICE_RINGINUSE))
+                    Usuarios.Where(c => c.Ramal.Equals(Ramal)).FirstOrDefault().Status = DTO.EstadoUsuario.Andamento;
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("[{0}] - Falha na execução do método onQueueMember. Mensagem: {1}", DateTime.Now, ex.Message));
+            }
+        }
+
+        private void clienteAsterisk_onSaiuDePausa(long Ramal)
+        {
+            try
+            {
+                var x = Usuarios.Where(c => c.Ramal.Equals(Ramal)).FirstOrDefault();
+                if (x.Status == DTO.EstadoUsuario.Pausa)
+                {
+                    x.Status = DTO.EstadoUsuario.Aguardando;
+                    var msg = String.Format("{0} clienteAsterisk_onSaiuDePausa\t\t{1}", DateTime.Now, Ramal);
+                    Console.Out.WriteLine(msg);
+                    if (OnOutputLogs != null)
+                        OnOutputLogs(msg);
+
+                    GerarLigacoes(Ramal, 1);
+                }
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("[{0}] - Falha na execução do método onSaiuDePausa. Mensagem: {1}", DateTime.Now, ex.Message));
+            }
+
+        }
+
+        private void clienteAsterisk_onRamalOcupado(long Ramal)
+        {
+            try
+            {
+                var msg = String.Format("{0} clienteAsterisk_onRamalOcupado\t\t{1}", DateTime.Now, Ramal);
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("[{0}] - Falha na execução do método onRamalOcupado. Mensagem: {1}", DateTime.Now, ex.Message));
+            }
+        }
+
+        private void clienteAsterisk_onRamalNaoAtendeu(long Ramal)
+        {
+            try
+            {
+                var msg = String.Format("{0} clienteAsterisk_onRamalNaoAtendeu\t\t{1}", DateTime.Now, Ramal);
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("[{0}] - Falha na execução do método onRamalNaoAtendeu. Mensagem: {1}", DateTime.Now, ex.Message));
+            }
+
+        }
+
+        private void clienteAsterisk_onRamalDiscando(long Ramal)
+        {
+            try
+            {
+                var msg = String.Format("{0} clienteAsterisk_onRamalDiscando\t\t{1}", DateTime.Now, Ramal);
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("[{0}] - Falha na execução do método onRamalDiscando. Mensagem: {1}", DateTime.Now, ex.Message));
+            }
+        }
+
+        private void clienteAsterisk_onRamalDesligou(long Ramal, string Causa = "Causa não informada")
+        {
+            try
+            {
+                var x = Usuarios.Where(c => c.Ramal.Equals(Ramal)).FirstOrDefault();
+                var msg = String.Format("clienteAsterisk_onRamalDesligou\t\t{0}", Ramal);
+                OutputLog(msg);
+                GerarLigacoes(Ramal, 1);
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("[{0}] - Falha na execução do método onRamalDesligou. Mensagem: {1}", DateTime.Now, ex.Message));
+            }
+        }
+
+        private void clienteAsterisk_onRamalChamando(long Ramal)
+        {
+            try
+            {
+                var msg = String.Format("{0} clienteAsterisk_onRamalChamando\t\t{1}", DateTime.Now, Ramal);
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("[{0}] - Falha na execução do método onRamalChamando. Mensagem: {1}", DateTime.Now, ex.Message));
+            }
+        }
+
+        private void clienteAsterisk_onRamalAtendeu(long Ramal, string LinhaConectada)
+        {
+            try
+            {
+                Usuarios.Where(c => c.Ramal.Equals(Ramal)).FirstOrDefault().Status = DTO.EstadoUsuario.Atendimento;
+                var msg = String.Format("{0} clienteAsterisk_onRamalAtendeu\t\t{1}Telefone\t\t{2}", DateTime.Now, Ramal, LinhaConectada);
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+
+                var CPF = Cargas.Where(x => x.Id.Equals(Telefones.Where(c => c.TelefoneTratado.Equals(LinhaConectada)).FirstOrDefault().IdCarga)).FirstOrDefault().Chave1;
+
+                //TODO - VErificar esta rotina
+                var url = string.Format("http://localhost:26259/Requests/Requests.aspx?ramal={0}&cpf={1}", Ramal, CPF);
+                new BLL.UsuarioLogado().Atualizar(new DTO.UsuarioLogado { Ramal = Ramal, Url = url });
+
+                //WebRequest.Create(string.Format("http://localhost:26259/Requests/Requests.aspx?ramal={0}&cpf={1}", Ramal, CPF)).GetResponse();
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("[{0}] - Falha na execução do método onRamalAtendeu. Mensagem: {1}", DateTime.Now, ex.Message));
+            }
+        }
+
+        //private void clienteAsterisk_onError(AsteriskClientException Erro)
+        //{
+        //    try
+        //    {
+        //        Console.Out.WriteLine(Erro.Message);
+        //        if (OnOutputLogs != null)
+        //            OnOutputLogs(Erro.Message);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        OutputLog(string.Format("[{0}] - Falha na execução do método onError. Mensagem: {1}", DateTime.Now, ex.Message));
+        //    }
+        //}
+
+        private void clienteAsterisk_onEntrouEmPausa(long Ramal)
+        {
+            try
+            {
+                Usuarios.Where(c => c.Ramal.Equals(Ramal)).FirstOrDefault().Status = DTO.EstadoUsuario.Pausa;
+                var msg = String.Format("{0} clienteAsterisk_onEntrouEmPausa\t\t{1}", DateTime.Now, Ramal);
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("[{0}] - Falha na execução do método onEntrouEmPausa. Mensagem: {1}", DateTime.Now, ex.Message));
+            }
+        }
+
+        private void clienteAsterisk_onDestinoOcupado(string Telefone)
+        {
+            try
+            {
+                DTO.CargaTelefoneRobo telefone = Telefones.Where(c => c.TelefoneTratado.Equals(Telefone)).FirstOrDefault();
+                telefone.Status = (int)DTO.TelefoneStatus.Ocupado;
+
+                DiscarMaisUmTelefone(Telefone);
+
+                var msg = String.Format("{0} clienteAsterisk_onDestinoOcupado\t\t{1}", DateTime.Now, Telefone);
+                Console.Out.WriteLine();
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("[{0}] - Falha na execução do método onDestinoOcupado. Mensagem: {1}", DateTime.Now, ex.Message));
+            }
+        }
+
+        private void clienteAsterisk_onDestinoNaoAtendeu(string Telefone)
+        {
+            try
+            {
+                AlteraStatusTelefone(Telefone, DTO.TelefoneStatus.NaoAtende);
+
+                DiscarMaisUmTelefone(Telefone);
+
+                var msg = String.Format("{0} clienteAsterisk_onDestinoNaoAtendeu\t\t{1}", DateTime.Now, Telefone);
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("[{0}] - Falha na execução do método onDestinoNaoAtendeu. Mensagem: {1}", DateTime.Now, ex.Message));
+            }
+        }
+
+        private DTO.CargaTelefoneRobo AlteraStatusTelefone(string Telefone, DTO.TelefoneStatus status)
+        {
+            try
+            {
+                DTO.CargaTelefoneRobo telefone = Telefones.Where(c => c.TelefoneTratado.Equals(Telefone)).FirstOrDefault();
+                if (telefone == null) return null;
+                telefone.Status = (int)status;
+
+                new BLL.CargaTelefone().Cadastrar(telefone);
+
+                return telefone;
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("[{0}] - Falha na execução do método AlteraStatusTelefone. Mensagem: {1}", DateTime.Now, ex.Message));
+                return null;
+            }
+        }
+
+        private void clienteAsterisk_onDestinoDiscando(string Telefone)
+        {
+            try
+            {
+                var msg = String.Format("{0} clienteAsterisk_onDestinoDiscando\t\t{1}", DateTime.Now, Telefone);
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("[{0}] - Falha na execução do método onDestinoDiscando. Mensagem: {1}", DateTime.Now, ex.Message));
+            }
+        }
+
+        private void clienteAsterisk_onDestinoDesligou(string Telefone, string Causa = "Causa não informada")
+        {
+            try
+            {
+                AlteraStatusTelefone(Telefone, DTO.TelefoneStatus.Desconhecido);
+
+                var msg = String.Format("{0} clienteAsterisk_onDestinoDesligou\t\t{1}", DateTime.Now, Telefone);
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("[{0}] - Falha na execução do método onDestinoDesligou. Mensagem: {1}", DateTime.Now, ex.Message));
+            }
+        }
+
+        private void clienteAsterisk_onDestinoChamando(string Telefone)
+        {
+            try
+            {
+                var msg = String.Format("{0} clienteAsterisk_onDestinoChamando\t\t{1}", DateTime.Now, Telefone);
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("[{0}] - Falha na execução do método onDestinoChamando. Mensagem: {1}", DateTime.Now, ex.Message));
+            }
+        }
+
+        private void clienteAsterisk_onDestinoAtendeu(string Telefone)
+        {
+            try
+            {
+                DTO.CargaTelefoneRobo telefone = AlteraStatusTelefone(Telefone, DTO.TelefoneStatus.Atendido);
+                DTO.Carga carga = Cargas.Where(c => c.Id.Equals(telefone.IdCarga)).FirstOrDefault();
+                carga.Status = (int)DTO.TelefoneStatus.Atendido;
+
+                var msg = String.Format("{0} clienteAsterisk_onDestinoAtendeu\t\t{1}", DateTime.Now, Telefone);
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("[{0}] - Falha na execução do método onDestinoAtendeu. Mensagem: {1}", DateTime.Now, ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Entrada da classe
+        /// </summary>
+        public void Processar()
+        {
+            //IniciarEscuta();
+            ConsultaCampanhas();
+            ConsultaCargas();
+            ConsultaUsuario();
+
+            //clienteAsterisk.RamaisStatus();
+            OutputLog("Robô iniciado com sucesso.");
+        }
+
+        private void DiscagemInicial()
+        {
+            OutputLog("Gerando ligações iniciais para os ramais ativos");
+
+            foreach (var u in Usuarios)
+            {
+                if (u.Status == DTO.EstadoUsuario.Aguardando)
+                {
+                    OutputLog(string.Format("Gerando ligações para o ramal {0}", u.Ramal));
+                    GerarLigacoes(u.Ramal, 1);
+                }
+            }
+            OutputLog("Ligações iniciais finalizadas, robô Silver em atividade.");
+        }
+
+        private void OutputLog(string msg)
+        {
+            var mensagem = string.Format("{0} - {1}", DateTime.Now, msg);
+            Console.Out.WriteLine(mensagem);
+            if (OnOutputLogs != null)
+                OnOutputLogs(mensagem);
+        }
+
+        private Thread thread_escuta_asterisk;
+        /// <summary>
+        /// Monitorar o status da thread de escuta do asterisk
+        /// </summary>
+        public Thread ThreadEscutaAsterisk
+        {
+            get { return thread_escuta_asterisk; }
+        }
+
+        public bool EscutandoAsterisk
+        {
+            get { return (thread_escuta_asterisk != null); }
+        }
+
+        //public void IniciarEscuta()
+        //{
+        //    if (EscutandoAsterisk) return;
+        //    try
+        //    {
+        //        thread_escuta_asterisk = new Thread(new ThreadStart(clienteAsterisk.Escutar));
+        //        thread_escuta_asterisk.Start();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        OutputLog(ex.Message);
+        //    }
+        //}
+
+        public void Discar(string numero_telefone, int IdTelefone, long TipoTelefone, string fila, long id_campanha)
+        {
+            //var t = Task.Factory.StartNew(() => clienteAsterisk.Discar(new Discagem
+            //{
+            //    Protocolo = Protocolo.Telefonica.ToString(),
+            //    Telefone = numero_telefone,
+            //    IdCampanha = id_campanha.ToString(),
+            //    Campanha = fila,
+            //    IdTelefone = IdTelefone.ToString(),
+            //    TipoTelefone = TipoTelefone.ToString()
+            //}));
+        }
+
+        //private ClienteAsterisk IniciarComponente()
+        //{
+        //    var clienteAsterisk = new ClienteAsterisk();
+        //    clienteAsterisk.onDestinoAtendeu += new DestinoAtendeu(clienteAsterisk_onDestinoAtendeu);
+        //    clienteAsterisk.onDestinoChamando += new DestinoChamando(clienteAsterisk_onDestinoChamando);
+        //    clienteAsterisk.onDestinoDesligou += new DestinoDesligou(clienteAsterisk_onDestinoDesligou);
+        //    clienteAsterisk.onDestinoDiscando += new DestinoDiscando(clienteAsterisk_onDestinoDiscando);
+        //    clienteAsterisk.onDestinoNaoAtendeu += new DestinoNaoAtendeu(clienteAsterisk_onDestinoNaoAtendeu);
+        //    clienteAsterisk.onDestinoOcupado += new DestinoOcupado(clienteAsterisk_onDestinoOcupado);
+        //    clienteAsterisk.onEntrouEmPausa += new EntrouEmPausa(clienteAsterisk_onEntrouEmPausa);
+        //    clienteAsterisk.onError += new Erro(clienteAsterisk_onError);
+        //    clienteAsterisk.onRamalAtendeu += new RamalAtendeu(clienteAsterisk_onRamalAtendeu);
+        //    clienteAsterisk.onRamalChamando += new RamalChamando(clienteAsterisk_onRamalChamando);
+        //    clienteAsterisk.onRamalDesligou += new RamalDesligou(clienteAsterisk_onRamalDesligou);
+        //    clienteAsterisk.onRamalDiscando += new RamalDiscando(clienteAsterisk_onRamalDiscando);
+        //    clienteAsterisk.onRamalNaoAtendeu += new RamalNaoAtendeu(clienteAsterisk_onRamalNaoAtendeu);
+        //    clienteAsterisk.onRamalOcupado += new RamalOcupado(clienteAsterisk_onRamalOcupado);
+        //    clienteAsterisk.onSaiuDePausa += new SaiuDePausa(clienteAsterisk_onSaiuDePausa);
+        //    clienteAsterisk.onRamaisStatus += new RamaisStatus(clienteAsterisk_onRamaisStatus);
+        //    clienteAsterisk.onQueueMember += new QueueMember(clienteAsterisk_onQueueMember);
+
+        //    return clienteAsterisk;
+        //}
+
+        private void ConsultaUsuario()
+        {
+            foreach (DTO.Campanha campanha in Campanhas)
+            {
+                var UsuariosAtivos = new BLL.Usuario().ObterLst(campanha.Id, DTO.TipoConsulta.PelaCampanha);
+                Parallel.ForEach(UsuariosAtivos, usuario =>
+                {
+                    if (usuario.IdCampanha > 0)
+                    {
+                        var usuarioRobo = new DTO.UsuarioRobo();
+                        usuarioRobo.Ativo = usuario.Ativo;
+                        usuarioRobo.CampanhaDescricao = usuario.CampanhaDescricao;
+                        usuarioRobo.Id = usuario.Id;
+                        usuarioRobo.IdCampanha = usuario.IdCampanha;
+                        usuarioRobo.IdGrupo = usuario.IdGrupo;
+                        usuarioRobo.Nome = usuario.Nome;
+                        usuarioRobo.Operador = usuario.Operador;
+                        usuarioRobo.PenultimaSenha = usuario.PenultimaSenha;
+                        usuarioRobo.Ramal = usuario.Ramal;
+                        usuarioRobo.Senha = usuario.Senha;
+                        usuarioRobo.SenhaExpiracao = usuario.SenhaExpiracao;
+                        usuarioRobo.Status = DTO.EstadoUsuario.Logoff;
+                        usuarioRobo.UltimaSenha = usuario.UltimaSenha;
+                        Usuarios.Add(usuarioRobo);
+                    }
+                });
+
+                //clienteAsterisk.StatusFila(campanha.Nome);
+            }
+        }
+
+        private void ConsultaCampanhas()
+        {
+            Campanhas.AddRange(new BLL.Campanha().Obter(true));
+        }
+
+        private void ConsultaCargas()
+        {
+            foreach (DTO.Campanha camp in Campanhas)
+                Cargas.AddRange(new BLL.Carga().SelectPelaCampanha(camp.Id));
+
+            foreach (DTO.Carga carga in Cargas)
+                Telefones.AddRange(ConsultaTodosTelefones(carga.Id));
+        }
+
+        private List<DTO.CargaTelefoneRobo> ConsultaTelefones(long IdCampanha, long Agressividade)
+        {
+
+            if (!ValidadorTempoCampanha(IdCampanha, Agressividade))
+                return null;
+
+            var Retorno = new List<DTO.CargaTelefoneRobo>();
+
+            var Auxcargas = Cargas.Where(c => (c.IdCampanha.Equals(IdCampanha)) && (c.Status == (int)DTO.TelefoneStatus.Aguardando)).OrderByDescending(w => w.Id).ToList();
+
+
+            foreach (var carga in Auxcargas)
+            {
+                var Auxtelefones = Telefones.Where(c => c.IdCarga.Equals(carga.Id) && c.Status.Equals((int)DTO.TelefoneStatus.Aguardando)).OrderByDescending(w => w.Id).ToList();
+                if (Auxtelefones.Count == 0)
+                {
+                    carga.Status = (int)DTO.TelefoneStatus.SemSucessoNaDiscagem;
+                    continue;
+                }
+
+
+                for (var i = 0; ((Retorno.Count < Agressividade) && (i < Auxtelefones.Count)); i++)
+                {
+                    Retorno.Add(Auxtelefones[i]);
+                    Auxtelefones[i].Status = (int)DTO.TelefoneStatus.EmAndamento;
+                }
+
+
+                if (Retorno.Count >= Agressividade)
+                    break;
+            };
+
+            return Retorno;
+        }
+
+        private bool ValidadorTempoCampanha(long IdCampanha, long Agressividade)
+        {
+            bool retorno = true;
+
+            //DTO.Campanha camp = new BLL.Campanha().Obter(IdCampanha);
+
+            //if ((DateTime.Now.Hour < camp.Inicio) || (DateTime.Now.Hour > camp.Fim))
+            //{
+            //    System.Threading.Thread.Sleep(600000);
+            //    ValidadorTempoCampanha(IdCampanha, Agressividade);
+            //}
+
+
+            return retorno;
+        }
+
+        private List<DTO.CargaTelefoneRobo> ConsultaTodosTelefones(long IdCarga)
+        {
+            try
+            {
+                var carga = new BLL.CargaTelefone().ObterPelaCarga(IdCarga);
+                foreach (var telefone in carga)
+                {
+                    DTO.CargaTelefoneRobo telefoneRobo = (telefone as DTO.CargaTelefoneRobo);
+                    telefoneRobo.TelefoneTratado = TrataTelefone(telefone);
+                    Telefones.Add(telefoneRobo);
+                }
+                return Telefones;
+            }
+            catch (Exception ex)
+            {
+                OutputLog(ex.Message);
+            }
+            return null;
+        }
+
+        private Protocolo DefineRotas(DTO.CargaTelefoneRobo Tel)
+        {
+
+            var Retorno = Protocolo.Telefonica;
+            return Retorno;
+        }
+
+        private string TrataTelefone(DTO.CargaTelefone Tel)
+        {
+            var Retorno = string.Empty;
+
+            var LDDD11 = new List<string>();
+
+            LDDD11.Add("4136");
+            LDDD11.Add("4204");
+            LDDD11.Add("2123");
+            LDDD11.Add("2144");
+            LDDD11.Add("2187");
+            LDDD11.Add("2198");
+            LDDD11.Add("2202");
+            LDDD11.Add("2588");
+            LDDD11.Add("3799");
+            LDDD11.Add("4653");
+            LDDD11.Add("4654");
+            LDDD11.Add("4655");
+            LDDD11.Add("2119");
+            LDDD11.Add("2427");
+            LDDD11.Add("3402");
+            LDDD11.Add("4012");
+            LDDD11.Add("4411");
+            LDDD11.Add("4412");
+            LDDD11.Add("4413");
+            LDDD11.Add("4414");
+            LDDD11.Add("4415");
+            LDDD11.Add("4417");
+            LDDD11.Add("4418");
+            LDDD11.Add("4494");
+            LDDD11.Add("4012");
+            LDDD11.Add("4891");
+            LDDD11.Add("2277");
+            LDDD11.Add("2473");
+            LDDD11.Add("3404");
+            LDDD11.Add("4031");
+            LDDD11.Add("4032");
+            LDDD11.Add("4033");
+            LDDD11.Add("4035");
+            LDDD11.Add("4481");
+            LDDD11.Add("4603");
+            LDDD11.Add("4409");
+            LDDD11.Add("4528");
+            LDDD11.Add("4529");
+            LDDD11.Add("4711");
+            LDDD11.Add("4717");
+            LDDD11.Add("4658");
+            LDDD11.Add("3408");
+            LDDD11.Add("4487");
+            LDDD11.Add("4534");
+            LDDD11.Add("4538");
+            LDDD11.Add("4894");
+            LDDD11.Add("2136");
+            LDDD11.Add("4592");
+            LDDD11.Add("4593");
+            LDDD11.Add("4409");
+            LDDD11.Add("4529");
+            LDDD11.Add("4017");
+            LDDD11.Add("4539");
+            LDDD11.Add("2136");
+            LDDD11.Add("2152");
+            LDDD11.Add("2434");
+            LDDD11.Add("2816");
+            LDDD11.Add("2882");
+            LDDD11.Add("3308");
+            LDDD11.Add("3378");
+            LDDD11.Add("3379");
+            LDDD11.Add("3395");
+            LDDD11.Add("3446");
+            LDDD11.Add("3963");
+            LDDD11.Add("3964");
+            LDDD11.Add("4491");
+            LDDD11.Add("4492");
+            LDDD11.Add("4497");
+            LDDD11.Add("4521");
+            LDDD11.Add("4522");
+            LDDD11.Add("4523");
+            LDDD11.Add("4525");
+            LDDD11.Add("4526");
+            LDDD11.Add("4527");
+            LDDD11.Add("4531");
+            LDDD11.Add("4532");
+            LDDD11.Add("4535");
+            LDDD11.Add("4581");
+            LDDD11.Add("4583");
+            LDDD11.Add("4584");
+            LDDD11.Add("4587");
+            LDDD11.Add("4589");
+            LDDD11.Add("4599");
+            LDDD11.Add("4601");
+            LDDD11.Add("4815");
+            LDDD11.Add("4816");
+            LDDD11.Add("4014");
+            LDDD11.Add("4406");
+            LDDD11.Add("4597");
+            LDDD11.Add("4895");
+            LDDD11.Add("4037");
+            LDDD11.Add("4018");
+            LDDD11.Add("4896");
+            LDDD11.Add("4036");
+            LDDD11.Add("4405");
+            LDDD11.Add("4021");
+            LDDD11.Add("4029");
+            LDDD11.Add("4602");
+            LDDD11.Add("4714");
+            LDDD11.Add("4716");
+            LDDD11.Add("4711");
+            LDDD11.Add("4713");
+            LDDD11.Add("4719");
+            LDDD11.Add("4784");
+            LDDD11.Add("2434");
+            LDDD11.Add("3378");
+            LDDD11.Add("3395");
+            LDDD11.Add("4493");
+            LDDD11.Add("4595");
+
+            if ((int.Parse(Tel.Ddd) == 11) && (!LDDD11.Contains(Tel.Telefone.ToString().Substring(0, 4))))
+            {
+                Retorno = Tel.Telefone;
+            }
+            else
+            {
+                Retorno = Tel.Ddd + Tel.Telefone;
+            }
+            return Retorno;
+        }
+
+        private void GerarLigacoes(long Ramal, long Agressividade)
+        {
+            var usuario = Usuarios.Where(c => c.Ramal.Equals(Ramal)).FirstOrDefault();
+            GerarLigacoesCampanha(usuario.IdCampanha, Agressividade);
+        }
+
+        private void GerarLigacoesCampanha(long IdCampanha, long Agressividade)
+        {
+            var campanha = Campanhas.Where(c => c.Id.Equals(IdCampanha)).FirstOrDefault();
+            if (Agressividade == 0)
+                Agressividade = campanha.Agressividade;
+
+            List<DTO.CargaTelefoneRobo> consultaTelefones = ConsultaTelefones(campanha.Id, Agressividade);
+            //foreach (var t in consultaTelefones)
+            //{
+            //    var protocolo = DefineRotas(t);
+            //    clienteAsterisk.Discar(protocolo, OperadoraDDD[protocolo] + t.TelefoneTratado, campanha.Id, campanha.Nome, Convert.ToInt32(t.TelId), t.IdTipo);
+            //}
+
+            List<Discagem> discagens = new List<Discagem>();
+            foreach (var t in consultaTelefones)
+            {
+                //--TODO Adicionar no DTO.CargaTelefoneRobo protocolo para não necessitar rodar este processo novamente
+                var protocolo = DefineRotas(t);
+                var d = new Discagem();
+                d.Protocolo = protocolo.ToString();
+                d.Telefone = t.TelefoneTratado;
+                d.IdCampanha = campanha.Id.ToString();
+                d.Campanha = campanha.Nome.ToString();
+                d.IdTelefone = t.TelId;
+                d.TipoTelefone = t.IdTipo.ToString();
+                discagens.Add(d);
+            }
+
+            //clienteAsterisk.Discar(discagens.ToArray());
+        }
+
+        private void DiscarMaisUmTelefone(string Telefone)
+        {
+            DTO.CargaTelefoneRobo telefone = Telefones.Find(c => c.TelefoneTratado.Equals(Telefone));
+            if (telefone.Status != (int)DTO.TelefoneStatus.Atendido)
+                GerarLigacoesCampanha(Cargas.Find(c => c.Id.Equals(telefone.IdCarga)).IdCampanha, 1);
+        }
+    }
+}

@@ -1,0 +1,27 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace Silver.DTO
+{
+    public class Discagem
+    {
+        public string Protocolo { get; set; }
+
+        public string Telefone { get; set; }
+
+        public string IdCampanha { get; set; }
+
+        public string Campanha { get; set; }
+
+        public string IdTelefone { get; set; }
+
+        public string TipoTelefone { get; set; }
+
+        public override string ToString()
+        {
+            return string.Format("Action: originate\r\nChannel: DGV/g{0}/{1}\r\nContext: interno\r\nExten: start\r\nPriority: 1\r\nVariable: Campanha={2}\r\nVariable: TelefoneID={3}\r\nVariable: TipoTelefone={4}\r\nCallerid: {1}\r\nVariable: IdCampanha={5}\r\n\r\n\r\n", Protocolo, Telefone, Campanha, IdTelefone, TipoTelefone, IdCampanha); ;
+        }
+    }
+}

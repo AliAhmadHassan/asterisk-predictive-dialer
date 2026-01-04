@@ -1,0 +1,696 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Silver.AsteriskClient;
+using System.Threading;
+using System.Net;
+using Silver.DTO;
+using System.Threading.Tasks;
+using System.Configuration;
+using Silver.AsteriskClient.DTO;
+
+namespace Silver.BLL
+{
+    public class ProcessoAsterisk
+    {
+        private object monitor_thread = new object();
+        public ClienteAsterisk cliente_asterisk = SingletonClientAsterisk.Instance;
+
+        public event EmAlteracaoStatus AlteracaoStatus;
+
+        private StatusProcessoDiscador _status;
+        public StatusProcessoDiscador Status
+        {
+            get
+            {
+                return _status;
+            }
+            set
+            {
+                _status = value;
+                if (AlteracaoStatus != null)
+                    AlteracaoStatus(value);
+            }
+        }
+
+        public DTO.Campanha Campanha { get; set; }
+
+        public List<DTO.Carga> Cargas { get; set; }
+
+        public List<DTO.CargaTelefoneRobo> Telefones { get; set; }
+
+        public List<DTO.UsuarioRobo> Operadores { get; set; }
+
+        public Action<string> DiscarMaisUmTelefone { get; set; }
+
+        public Action<long> GerarLigacoes { get; set; }
+
+        public Action<long> DiscagemInicial { get; set; }
+
+        public ProcessoAsterisk(Action<string> discar_mais_um, Action<long> gerar_ligacoes, Action<long> discagem_inicial)
+            : this()
+        {
+            DiscarMaisUmTelefone = discar_mais_um;
+            GerarLigacoes = gerar_ligacoes;
+            DiscagemInicial = discagem_inicial;
+            cliente_asterisk.OnOutputLogs += OutputLog;
+        }
+
+        public ProcessoAsterisk()
+        {
+            cliente_asterisk.IniciarConexao();
+            IniciarComponente();
+        }
+
+        public event OutputLogs OnOutputLogs;
+
+        private void clienteAsterisk_onRamaisStatus(List<RamalStatus> RamaisStatus)
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                foreach (RamalStatus ramalStatus in RamaisStatus)
+                {
+                    if (ramalStatus.Status == PeerStatus.Atendendo)
+                    {
+                        Operadores.Where(c => c.Ramal.Equals(ramalStatus.Ramal)).FirstOrDefault().Status = DTO.EstadoUsuario.Atendimento;
+                        var msg = String.Format("{0} clienteAsterisk_onRamaisStatus\t\t{1}", DateTime.Now, ramalStatus.Ramal);
+                        Console.Out.WriteLine(msg);
+                        if (OnOutputLogs != null)
+                            OnOutputLogs(msg);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "clienteAsterisk_onRamaisStatus(List<RamalStatus>)".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        private void clienteAsterisk_onQueueMember(long Ramal, string fila, QueueMemberStatus status)
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                UsuarioRobo operador = null;
+                switch (status)
+                {
+                    case QueueMemberStatus.AST_DEVICE_UNKNOWN:
+                    case QueueMemberStatus.AST_DEVICE_INVALID:
+                    case QueueMemberStatus.AST_DEVICE_UNAVAILABLE:
+                        operador = Operadores.Where(c => c.Ramal.Equals(Ramal)).FirstOrDefault();
+                        if (operador != null)
+                            operador.Status = DTO.EstadoUsuario.Logoff;
+                        break;
+                    case QueueMemberStatus.AST_DEVICE_NOT_INUSE:
+                    case QueueMemberStatus.AST_DEVICE_ONHOLD:
+                        operador = Operadores.Where(c => c.Ramal.Equals(Ramal)).FirstOrDefault();
+                        if (operador != null)
+                            operador.Status = DTO.EstadoUsuario.Aguardando;
+
+                        if (Status == StatusProcessoDiscador.Executando)
+                            DiscagemInicial(Ramal);
+
+                        break;
+                    case QueueMemberStatus.AST_DEVICE_INUSE:
+                    case QueueMemberStatus.AST_DEVICE_BUSY:
+                        operador = Operadores.Where(c => c.Ramal.Equals(Ramal)).FirstOrDefault();
+                        if (operador != null)
+                            operador.Status = DTO.EstadoUsuario.Atendimento;
+
+                        break;
+                    case QueueMemberStatus.AST_DEVICE_RINGING:
+                    case QueueMemberStatus.AST_DEVICE_RINGINUSE:
+                        operador = Operadores.Where(c => c.Ramal.Equals(Ramal)).FirstOrDefault();
+                        if (operador != null)
+                            operador.Status = DTO.EstadoUsuario.Andamento;
+                        break;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "clienteAsterisk_onQueueMember(long,string, QueueMemberStatus)".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        private void clienteAsterisk_onQueueParams(QueueParamsEntity queueParamsEntity)
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            Monitor.Enter(monitor_thread);
+
+            try
+            {
+                int QtdOperadoresAguardando = Operadores.Where(c => c.Status.Equals(EstadoUsuario.Aguardando)).Count();
+                int QtdLigacoesAguardando = queueParamsEntity.Calls;
+
+                int NovasLigacoes = QtdOperadoresAguardando - QtdLigacoesAguardando;
+
+                if (NovasLigacoes > 0)
+                {
+                    GerarLigacoes(Campanha.Agressividade * NovasLigacoes);
+                }
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "clienteAsterisk_onQueueMember(long,string, QueueMemberStatus)".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        private void clienteAsterisk_onSaiuDePausa(long Ramal)
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                var x = Operadores.Where(c => c.Ramal.Equals(Ramal)).FirstOrDefault();
+                if (x.Status == DTO.EstadoUsuario.Pausa)
+                {
+                    x.Status = DTO.EstadoUsuario.Aguardando;
+                    var msg = String.Format("{0} clienteAsterisk_onSaiuDePausa\t\t{1}", DateTime.Now, Ramal);
+                    Console.Out.WriteLine(msg);
+                    if (OnOutputLogs != null)
+                        OnOutputLogs(msg);
+
+                    if (this.Status == StatusProcessoDiscador.Executando)
+                        cliente_asterisk.StatusFila(Campanha.Nome);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "clienteAsterisk_onSaiuDePausa(long)".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+
+        }
+
+        private void clienteAsterisk_onRamalOcupado(long Ramal)
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                var msg = String.Format("{0} clienteAsterisk_onRamalOcupado\t\t{1}", DateTime.Now, Ramal);
+                Console.Out.WriteLine(msg);
+                cliente_asterisk.StatusFila(Campanha.Nome);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "clienteAsterisk_onRamalOcupado(long)".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        private void clienteAsterisk_onRamalNaoAtendeu(long Ramal)
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            try
+            {
+                var msg = String.Format("{0} clienteAsterisk_onRamalNaoAtendeu\t\t{1}", DateTime.Now, Ramal);
+                Console.Out.WriteLine(msg);
+                cliente_asterisk.StatusFila(Campanha.Nome);
+
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+
+
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "clienteAsterisk_onRamalNaoAtendeu(long)".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        private void clienteAsterisk_onRamalDiscando(long Ramal)
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                var msg = String.Format("{0} clienteAsterisk_onRamalDiscando\t\t{1}", DateTime.Now, Ramal);
+                var u = Operadores.Where(o => o.Ramal.Equals(Ramal)).FirstOrDefault();
+                if (u != null)
+                    u.Status = EstadoUsuario.Andamento;
+
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+
+
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "clienteAsterisk_onRamalDiscando(long)".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        private void clienteAsterisk_onRamalDesligou(long Ramal, string Causa = "Causa não informada")
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                var x = Operadores.Where(c => c.Ramal.Equals(Ramal)).FirstOrDefault();
+                x.Status = EstadoUsuario.Aguardando;
+
+                var msg = String.Format("clienteAsterisk_onRamalDesligou\t\t{0}", Ramal);
+
+                OutputLog(msg);
+
+                if (x.Status == EstadoUsuario.Aguardando)
+                    cliente_asterisk.StatusFila(Campanha.Nome);
+
+
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "clienteAsterisk_onRamalDesligou(long,string)".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        private void clienteAsterisk_onRamalChamando(long Ramal)
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                var msg = String.Format("{0} clienteAsterisk_onRamalChamando\t\t{1}", DateTime.Now, Ramal);
+                var u = Operadores.Where(o => o.Ramal.Equals(Ramal)).FirstOrDefault();
+                if (u != null)
+                    u.Status = EstadoUsuario.Andamento;
+
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+
+
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "clienteAsterisk_onRamalChamando(long)".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        private void clienteAsterisk_onRamalAtendeu(long Ramal, string LinhaConectada)
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                var operador = Operadores.Where(c => c.Ramal.Equals(Ramal)).FirstOrDefault();
+                if (operador == null) return;
+                operador.Status = DTO.EstadoUsuario.Atendimento;
+                var msg = String.Format("{0} clienteAsterisk_onRamalAtendeu\t\t{1}Telefone\t\t{2}", DateTime.Now, Ramal, LinhaConectada);
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+
+                var CPF = Cargas.Where(x => x.Id.Equals(Telefones.Where(c => c.TelefoneTratado.Equals(LinhaConectada)).FirstOrDefault().IdCarga)).FirstOrDefault().Chave1;
+
+                var url = string.Format(ConfigurationManager.AppSettings["application.url.crm"], CPF);
+                new BLL.UsuarioLogado().Atualizar(new DTO.UsuarioLogado { Ramal = Ramal, Url = url });
+
+                //WebRequest.Create(string.Format(ConfigurationManager.AppSettings["application.url.server"] + "requests/requests.aspx?ramal={0}&cpf={1}", Ramal, CPF)).GetResponse();
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "clienteAsterisk_onRamalAtendeu(long,string)".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        private void clienteAsterisk_onError(AsteriskClientException Erro)
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                Console.Out.WriteLine(Erro.Message);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(Erro.Message);
+
+
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "clienteAsterisk_onError(AsteriskClientException)".ToUpper(), ex.Message));
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        private void clienteAsterisk_onEntrouEmPausa(long Ramal)
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                var u = Operadores.Where(o => o.Ramal.Equals(Ramal)).FirstOrDefault();
+                if (u != null)
+                    u.Status = EstadoUsuario.Pausa;
+
+                var msg = String.Format("{0} clienteAsterisk_onEntrouEmPausa\t\t{1}", DateTime.Now, Ramal);
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+
+
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "clienteAsterisk_onEntrouEmPausa(long)".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        private void clienteAsterisk_onDestinoOcupado(string Telefone)
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                DTO.CargaTelefoneRobo telefone = Telefones.Where(c => c.TelefoneTratado.Equals(Telefone)).FirstOrDefault();
+                Task.Factory.StartNew(() => { AlteraStatusTelefone(Telefone, DTO.TelefoneStatus.Ocupado); });
+                if (telefone == null) return;
+                telefone.Status = (int)DTO.TelefoneStatus.Ocupado;
+                if (Status == StatusProcessoDiscador.Executando)
+                    DiscarMaisUmTelefone(Telefone);
+
+                var msg = String.Format("{0} clienteAsterisk_onDestinoOcupado\t\t{1}", DateTime.Now, Telefone);
+                Console.Out.WriteLine();
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+
+
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "clienteAsterisk_onDestinoOcupado(string)".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        private void clienteAsterisk_onDestinoNaoAtendeu(string Telefone)
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                Task.Factory.StartNew(() => { AlteraStatusTelefone(Telefone, DTO.TelefoneStatus.NaoAtende); });
+                DiscarMaisUmTelefone(Telefone);
+                var msg = String.Format("{0} clienteAsterisk_onDestinoNaoAtendeu\t\t{1}", DateTime.Now, Telefone);
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "clienteAsterisk_onDestinoNaoAtendeu(string)".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        private void clienteAsterisk_onDestinoDiscando(string Telefone)
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                var msg = String.Format("{0} clienteAsterisk_onDestinoDiscando\t\t{1}", DateTime.Now, Telefone);
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+
+
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "clienteAsterisk_onDestinoDiscando(string)".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        private void clienteAsterisk_onDestinoDesligou(string Telefone, string Causa = "Causa não informada")
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                Task.Factory.StartNew(() => { AlteraStatusTelefone(Telefone, DTO.TelefoneStatus.SemSucessoNaDiscagem); });
+
+                var msg = String.Format("{0} clienteAsterisk_onDestinoDesligou\t\t{1}", DateTime.Now, Telefone);
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+
+
+                cliente_asterisk.StatusFila(Campanha.Nome);
+
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "clienteAsterisk_onDestinoDesligou(string,string)".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        private void clienteAsterisk_onDestinoChamando(string Telefone)
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                Task.Factory.StartNew(() => { AlteraStatusTelefone(Telefone, DTO.TelefoneStatus.EmAndamento); });
+                var msg = String.Format("{0} clienteAsterisk_onDestinoChamando\t\t{1}", DateTime.Now, Telefone);
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "clienteAsterisk_onDestinoChamando(string)".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        private void clienteAsterisk_onDestinoAtendeu(string Telefone)
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                DTO.CargaTelefoneRobo telefone = AlteraStatusTelefone(Telefone, DTO.TelefoneStatus.Atendido);
+                if (telefone == null) return;
+                DTO.Carga carga = Cargas.Where(c => c.Id.Equals(telefone.IdCarga)).FirstOrDefault();
+                carga.Status = (int)DTO.TelefoneStatus.Atendido;
+
+                var msg = String.Format("{0} clienteAsterisk_onDestinoAtendeu\t\t{1}", DateTime.Now, Telefone);
+                Console.Out.WriteLine(msg);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(msg);
+
+
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "clienteAsterisk_onDestinoAtendeu(string)".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        public void IniciarEscuta()
+        {
+
+            //if (Status == StatusProcessoDiscador.Parado) return;
+            //Monitor.Enter(monitor_thread);
+            //try
+            //{
+            //    if (SingletonClientAsterisk.EscutaIniciada) return;
+
+            //    //SingletonClientAsterisk.thread_escuta_asterisk = new Thread(new ThreadStart(cliente_asterisk.Escutar));
+            //    SingletonClientAsterisk.thread_escuta_asterisk.Start();
+            //    SingletonClientAsterisk.EscutaIniciada = true;
+
+            //}
+            //catch (Exception ex)
+            //{
+            //    OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "IniciarEscuta()".ToUpper(), ex.Message));
+            //    Status = StatusProcessoDiscador.Erro;
+            //}
+            //finally
+            //{
+            //    Monitor.Exit(monitor_thread);
+            //}
+        }
+
+        private void OutputLog(string msg)
+        {
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                var mensagem = string.Format("{0} - {1}", DateTime.Now, msg);
+                Console.Out.WriteLine(mensagem);
+                if (OnOutputLogs != null)
+                    OnOutputLogs(mensagem);
+
+
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "Outpulog(string)".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        private DTO.CargaTelefoneRobo AlteraStatusTelefone(string Telefone, DTO.TelefoneStatus status)
+        {
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                DTO.CargaTelefoneRobo telefone = Telefones.Where(c => c.TelefoneTratado.Equals(Telefone)).FirstOrDefault();
+                if (telefone == null) return null;
+                telefone.Status = (int)status;
+
+                new BLL.CargaTelefone().Cadastrar(telefone);
+
+                return telefone;
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "AlteraStatusTelefone(string,TelefoneStatus)".ToUpper(), ex.Message));
+                return null;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+
+        protected void IniciarComponente()
+        {
+            if (Status == StatusProcessoDiscador.Parado) return;
+            Monitor.Enter(monitor_thread);
+            try
+            {
+                var clienteAsterisk = new ClienteAsterisk();
+                cliente_asterisk.onDestinoAtendeu += clienteAsterisk_onDestinoAtendeu;
+                cliente_asterisk.onDestinoChamando += clienteAsterisk_onDestinoChamando;
+                cliente_asterisk.onDestinoDesligou += clienteAsterisk_onDestinoDesligou;
+                cliente_asterisk.onDestinoDiscando += clienteAsterisk_onDestinoDiscando;
+                cliente_asterisk.onDestinoNaoAtendeu += clienteAsterisk_onDestinoNaoAtendeu;
+                cliente_asterisk.onDestinoOcupado += clienteAsterisk_onDestinoOcupado;
+                cliente_asterisk.onEntrouEmPausa += clienteAsterisk_onEntrouEmPausa;
+                cliente_asterisk.onError += clienteAsterisk_onError;
+                cliente_asterisk.onRamalAtendeu += clienteAsterisk_onRamalAtendeu;
+                cliente_asterisk.onRamalChamando += clienteAsterisk_onRamalChamando;
+                cliente_asterisk.onRamalDesligou += clienteAsterisk_onRamalDesligou;
+                cliente_asterisk.onRamalDiscando += clienteAsterisk_onRamalDiscando;
+                cliente_asterisk.onRamalNaoAtendeu += clienteAsterisk_onRamalNaoAtendeu;
+                cliente_asterisk.onRamalOcupado += clienteAsterisk_onRamalOcupado;
+                cliente_asterisk.onSaiuDePausa += clienteAsterisk_onSaiuDePausa;
+                cliente_asterisk.onRamaisStatus += clienteAsterisk_onRamaisStatus;
+                cliente_asterisk.onQueueMember += clienteAsterisk_onQueueMember;
+                cliente_asterisk.onQueueParams += clienteAsterisk_onQueueParams;
+
+            }
+            catch (Exception ex)
+            {
+                OutputLog(string.Format("Falha no discador da campanha {0}. Método: {1} Mensagem: {2}", Campanha.Nome.ToUpper(), "IniciarComponente()".ToUpper(), ex.Message));
+                Status = StatusProcessoDiscador.Erro;
+            }
+            finally
+            {
+                Monitor.Exit(monitor_thread);
+            }
+        }
+    }
+}

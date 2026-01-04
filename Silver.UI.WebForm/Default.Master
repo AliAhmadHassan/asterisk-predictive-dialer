@@ -1,0 +1,49 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Default.master.cs" Inherits="Silver.UI.Web.Presentation.Comum.Default" %>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title></title>
+    <link href="Pages/Dashboard/style/Dashboard.css" rel="stylesheet" type="text/css" />
+    <asp:ContentPlaceHolder ID="head" runat="server">
+    </asp:ContentPlaceHolder>
+    <meta http-equiv="X-UA-Compatible" content="IE=9" />
+</head>
+<body>
+    <form id="form1" runat="server">
+    <asp:ScriptManager ID="ScriptManager1" runat="server" EnableScriptGlobalization="true"
+        EnableScriptLocalization="true">
+    </asp:ScriptManager>
+    
+    <ul id="dock">
+        <asp:Literal ID="lit_menu" runat="server" Visible="true"></asp:Literal>
+    </ul>
+    <div id="header_page" style="background-image: url('../../Images/bg_header.png')">
+        <table width="100%" style="vertical-align: top;">
+            <tr>
+                <td style="margin-left: 20px;">
+                    <div id="nome_aplicacao">
+                        <asp:HyperLink ID="hplHome" NavigateUrl="~/Default.aspx" runat="server" Style="color: White;">
+                            <asp:Image ID="img_logotipo_aplicacao" runat="server" AlternateText="" ImageAlign="Middle" />&nbsp;
+                            <asp:Label ID="lbl_nome_aplicacao" runat="server" />
+                        </asp:HyperLink></div></td><td align="left" style="width: 100%">
+                    <span class="tituloPagina">
+                        <asp:Label ID="lblNomePagina" runat="server" Text="Detalhes do Devedor"></asp:Label></span><span class="detalhesPagina"><br />
+                        <asp:Label ID="lblDescricaoPagina" runat="server" Text="Descrição das funcionalidades da página"></asp:Label></span></td><td align="right">
+                    <asp:TextBox ID="textboxbuscar" runat="server" title="Busca geral no Sistema" Visible="False"></asp:TextBox></td><td align="right">
+                    <div style="width: 180px">
+                        <asp:Image ID="Image1" runat="server" ImageUrl="~/Imagens/search-icon.png" Visible="False" />&nbsp;&nbsp; <asp:Image ID="img1" runat="server" ImageUrl="~/Imagens/back-icon.png" Visible="False" />&nbsp;&nbsp; <asp:Image ID="img3" runat="server" ImageUrl="~/Imagens/logout_home.png" Width="46px"
+                            Height="46px" AlternateText="Logout do sistema" Visible="False" /></div>
+                </td>
+            </tr>
+        </table>
+        <a href="#dialog" name="modal" class="close"></a>
+    </div>
+    <div id="content">
+     
+        <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
+        </asp:ContentPlaceHolder>
+    </div>
+     </form>
+</body>
+</html>

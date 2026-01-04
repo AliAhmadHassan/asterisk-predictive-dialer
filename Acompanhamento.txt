@@ -1,0 +1,14 @@
+Diário de bordo.
+#Dia 17/04/2014
+	1 - Carga realizada
+	2 - Falha nas pausas. (Processo corrigido)
+	3 - TMA e TME (Dashboard)
+	4 - Linha do Tempo (Dashboard)
+	5 - Exportação Mailing
+	6 - Botão não é cliente.
+		a - Retornar status da carga(cliente) para continuar as ligações
+		b - Alterar status para não é o cliente - Alteração junto com o cobnet
+	7 - Enviar na querystring o id_historico, id_carga e idtelefone. - OK
+	8 - Revisão da página de consulta gravação junto com a Celma.
+	9 - Após recarregar as filas pelo servidor discador, pausar todos os ramais
+	10 - No cadastro da campanha não está gravando a estratégia corretamente

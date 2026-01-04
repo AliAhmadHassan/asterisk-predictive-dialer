@@ -1,0 +1,905 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Net.Sockets;
+using System.Text.RegularExpressions;
+using Silver.Common;
+using System.Configuration;
+using Silver.AsteriskClient.DTO;
+using Silver.DTO;
+
+namespace Silver.AsteriskClient
+{
+    public class ClienteAsterisk : IDisposable
+    {
+        string usuario_asterisk = ConfigurationManager.AppSettings["application.asterisk.user"];
+        string senha_asterisk = ConfigurationManager.AppSettings["application.asterisk.secret"];
+        string ip_asterisk = ConfigurationManager.AppSettings["application.asterisk.ip"];
+        int porta_asterisk = ConfigurationManager.AppSettings["application.asterisk.porta"].ToInt32();
+
+        private TcpClient socket_asterisk;
+
+        // Private Delegates
+        private delegate void readStreamDelegate(NetworkStream stream);
+        private delegate void readSocketDelegate(Socket socket);
+
+        private NetworkStream netStream;
+
+        public void IniciarConexao()
+        {
+            socket_asterisk = new TcpClient(ip_asterisk, porta_asterisk);
+            netStream = socket_asterisk.GetStream();
+
+            readStreamDelegate readSteam = new readStreamDelegate(readStream);
+            readSteam.BeginInvoke(netStream, new AsyncCallback(readStreamEnd), null);
+        }
+
+        private void readStream(NetworkStream stream)
+        {
+            String command = "";
+            Int32 errorCount = 0;
+
+            while (true)
+            {
+                try
+                {
+                    errorCount += 1;
+                    Byte[] bytes = new Byte[1024];
+                    Int32 received;
+                    String[] lines;
+                    received = stream.Read(bytes, 0, 1024);
+                    command += Encoding.ASCII.GetString(bytes, 0, received);
+
+                    if (Regex.Match(command, "(Asterisk Call Manager/)([0-9]*).([0-9]*)\\r\\n", RegexOptions.IgnoreCase).Success)
+                    {
+                        command = "";
+                        Login();
+                    }
+
+                    lines = Regex.Split(command, "\\r\\n\\r\\n", RegexOptions.Multiline);
+
+                    for (Int32 i = 0; i < lines.Length - 1; i++)
+                        ExecutarSBBuffer(lines[i]);
+
+                    command = lines[lines.Length - 1];
+                    errorCount -= 1;
+                }
+                catch (Exception e)
+                {
+                    SaidaMensagem(e.Message, LoggerType.ERRO);
+                }
+
+                if (errorCount == 10)
+                {
+                    SaidaMensagem("AMIProxy is no longer accepting messages from the asterisk server so will commence shutdown.", LoggerType.ERRO);
+                    return;
+                }
+
+            }
+        }
+
+        private void ExecutarSBBuffer(string bloco)
+        {
+            try
+            {
+                if ((bloco.Contains('\n')) && (bloco.Contains(':')))
+                {
+                    var Linhas = bloco.Split('\n');
+
+                    switch (Linhas[0].Split(':')[1].Trim())
+                    {
+                        case "Newstate":
+                            NewState(Linhas);
+                            break;
+
+                        case "Bridge":
+                            Bridge(Linhas);
+                            break;
+
+                        case "Hangup":
+                            HangUp(Linhas);
+                            break;
+                        case "NewCallerId":
+                            NewCallerId(Linhas);
+                            break;
+                        case "QueueMemberPaused":
+                            QueueMemberPaused(Linhas);
+                            break;
+                        case "QueueMember":
+                            QueueMember(Linhas);
+                            break;
+                        case "QueueParams":
+                            QueueParams(Linhas);
+                            break;
+                        case "Follows":
+                            inuse(Linhas);
+                            break;
+                        case "PeerStatus":
+                            peerStatus(Linhas);
+                            break;
+                        case "Error":
+                            Erro(new AsteriskClientException(Linhas[1].Split(':')[1].Trim()));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+            }
+            catch { }
+            finally { }
+        }
+
+        private void readStreamEnd(IAsyncResult result)
+        {
+        }
+
+        protected void SaidaMensagem(string msg, LoggerType tipo)
+        {
+            string msg_saida = string.Format("[{0}][{1}] - {2}", DateTime.Now, Enum.GetName(typeof(LoggerType), tipo), msg);
+            OutputLog(msg_saida);
+        }
+
+        private void OutputLog(string msg)
+        {
+            var mensagem = string.Format("{0} - {1}", DateTime.Now, msg);
+            Console.Out.WriteLine(mensagem);
+            if (OnOutputLogs != null)
+                OnOutputLogs(mensagem);
+        }
+
+        private void Login()
+        {
+            SendMessageToAsterisk("Action: Login\nActionID: [Login###]\nUsername: " + usuario_asterisk + "\nSecret: " + senha_asterisk);
+        }
+
+        private void SendMessageToAsterisk(String message)
+        {
+            try
+            {
+                Byte[] data = Encoding.ASCII.GetBytes(message + "\n\n");
+                netStream.Write(data, 0, data.Length);
+            }
+            catch (Exception e)
+            {
+                SaidaMensagem(e.Message, LoggerType.ERRO);
+            }
+        }
+
+        #region Command Asterisk
+
+        /// <summary>
+        /// Medoto para Recarregar algum Modulo de Configuração
+        /// </summary>
+        /// <param name="Modulo"> Modulo para Recarregar</param>
+        /// <returns></returns>
+        public void RecarregarArquivoConfiguracaoFilas(AsteriskModulo Modulo)
+        {
+            var Command = string.Empty;
+            switch (Modulo)
+            {
+                case AsteriskModulo.Ael:
+                    Command = "ael reload";
+                    break;
+                case AsteriskModulo.Sip:
+                    Command = "Sip reload";
+                    break;
+                case AsteriskModulo.DialPlan:
+                    Command = "dialplan reload";
+                    break;
+                case AsteriskModulo.Queue:
+                    Command = "queue reload all";
+                    break;
+                default:
+                    Command = "reload";
+                    break;
+            }
+
+            var command_asterisk = string.Format("Action: Command\nCommand:{0}\n\n", Command);
+            SendMessageToAsterisk(command_asterisk);
+        }
+
+        public void RamaisStatus()
+        {
+            var command_asterisk = string.Format("Action: Command\nCommand:{0}\n\n", "sip show inuse");
+            SendMessageToAsterisk(command_asterisk);
+        }
+
+        public void Discar(params Discagem[] discagens)
+        {
+            //var prot = ((int)protocolo).ToString();
+            var command_asterisk = new StringBuilder();
+            foreach (Discagem discagem in discagens)
+                command_asterisk.Append(discagem.ToString());
+
+            //var command_asterisk = string.Format("Action: originate\nChannel: DGV/g{0}/{1}\nContext: interno\nExten: start\nPriority: 1\nVariable: Campanha={2}\nVariable: TelefoneID={3}\nVariable: TipoTelefone={4}\nCallerid: {1}\nVariable: IdCampanha={5}\n\n", prot, Telefone, campanha, IdTelefone, TipoTelefone, id_campanha);
+            SendMessageToAsterisk(command_asterisk.ToString());
+        }
+
+        public void IniciarPausaNaFila(long ramal, string fila, string razao = "Razão não informada")
+        {
+            //Login();
+
+            var command_asterisk = string.Format("Action: QueuePause\nInterface: SIP/{0}\nPaused: yes\nQueue:{1}\nReason: {2}\n\n", ramal, fila, razao);
+            SendMessageToAsterisk(command_asterisk);
+        }
+
+		public void FinalizarPausaNaFila(long ramal, string fila, string razao = "Razão não informada")
+        {
+            //Login();
+
+            var command_asterisk = string.Format("Action: QueuePause\nInterface: SIP/{0}\nPaused: no\nQueue:{1}\nReason: {2}\n\n", ramal, fila, razao);
+            SendMessageToAsterisk(command_asterisk);
+        }
+
+        public void StatusFila(string fila)
+        {
+            //A resposta deste método saira no método 'QueueMember'
+            var command_asterisk = string.Format("Action: QueueStatus\nQueue:{0}\n\n", fila);
+            SendMessageToAsterisk(command_asterisk);
+        }
+
+
+
+        public void AdicionarOperadorFila(long ramal, string fila)
+        {
+            //Login();
+
+            var command_asterisk = string.Format("Action: QueueAdd\nInterface: SIP/{0}\nPaused: no\nQueue:{1}\nMemberName: {0}\n\n", ramal, fila);
+            SendMessageToAsterisk(command_asterisk);
+        }
+
+        public void RemoverOperadorFila(long ramal, string fila)
+        {
+            //Login();
+
+            var command_asterisk = string.Format("Action: QueueRemove\nQueue: {0}\nInterface: sip/{1}\n\n", fila, ramal);
+            SendMessageToAsterisk(command_asterisk);
+
+        }
+        #endregion
+
+        #region link com Delegate
+        private void RamalAtendeu(long Ramal, string LinhaConectada)
+        {
+            if (onRamalAtendeu != null)
+            {
+                onRamalAtendeu(Ramal, LinhaConectada);
+            }
+        }
+        private void RamalDiscando(long Ramal)
+        {
+            if (onRamalDiscando != null)
+            {
+                onRamalDiscando(Ramal);
+            }
+        }
+        private void RamalChamando(long Ramal)
+        {
+            if (onRamalChamando != null)
+            {
+                onRamalChamando(Ramal);
+            }
+        }
+        private void RamalDesligou(long Ramal, string Causa)
+        {
+            if (onRamalDesligou != null)
+            {
+                onRamalDesligou(Ramal, Causa);
+            }
+        }
+        private void RamalOcupado(long Ramal)
+        {
+            if (onRamalOcupado != null)
+            {
+                onRamalOcupado(Ramal);
+            }
+        }
+        private void RamalNaoAtendeu(long Ramal)
+        {
+            if (onRamalNaoAtendeu != null)
+            {
+                onRamalNaoAtendeu(Ramal);
+            }
+        }
+        private void RamalRegistrado(long Ramal)
+        {
+            if (onRamalRegistrado != null)
+            {
+                onRamalRegistrado(Ramal);
+            }
+        }
+        private void RamalDesRegistrado(long Ramal)
+        {
+            if (onRamalDesRegistrado != null)
+            {
+                onRamalDesRegistrado(Ramal);
+            }
+        }
+
+        private void DestinoAtendeu(string Telefone)
+        {
+            if (onDestinoAtendeu != null)
+            {
+                onDestinoAtendeu(Telefone);
+            }
+        }
+        private void DestinoDiscando(string Telefone)
+        {
+            if (onDestinoDiscando != null)
+            {
+                onDestinoDiscando(Telefone);
+            }
+        }
+        private void DestinoChamando(string Telefone)
+        {
+            if (onDestinoChamando != null)
+            {
+                onDestinoChamando(Telefone);
+            }
+        }
+        private void DestinoDesligou(string Telefone, string Causa)
+        {
+            if (onDestinoDesligou != null)
+            {
+                onDestinoDesligou(Telefone, Causa);
+            }
+        }
+        private void DestinoOcupado(string Telefone)
+        {
+            if (onDestinoOcupado != null)
+            {
+                onDestinoOcupado(Telefone);
+            }
+        }
+        private void DestinoNaoAtendeu(string Telefone)
+        {
+            if (onDestinoNaoAtendeu != null)
+            {
+                onDestinoNaoAtendeu(Telefone);
+            }
+        }
+
+        private void EntrouEmPausa(long Ramal)
+        {
+            if (onEntrouEmPausa != null)
+            {
+                onEntrouEmPausa(Ramal);
+            }
+        }
+        private void SaiuDePausa(long Ramal)
+        {
+            if (onSaiuDePausa != null)
+            {
+                onSaiuDePausa(Ramal);
+            }
+        }
+
+        private void RamaisStatus(List<RamalStatus> RamaisStatus)
+        {
+            if (onRamaisStatus != null)
+            {
+                onRamaisStatus(RamaisStatus);
+            }
+        }
+
+        private void QueueMember(long Ramal, string fila, QueueMemberStatus status)
+        {
+            if (onQueueMember != null)
+            {
+                onQueueMember(Ramal, fila, status);
+            }
+        }
+
+        private void QueueParams(QueueParamsEntity queueParamsEntity)
+        {
+            if (onQueueParams != null)
+            {
+                onQueueParams(queueParamsEntity);
+            }
+        }
+
+        private void Erro(AsteriskClientException Erro)
+        {
+            if (onError != null)
+            {
+                onError(Erro);
+            }
+        }
+        #endregion
+
+        #region Eventos
+        public event RamalAtendeu onRamalAtendeu;
+        public event RamalDiscando onRamalDiscando;
+        public event RamalChamando onRamalChamando;
+        public event RamalDesligou onRamalDesligou;
+        public event RamalOcupado onRamalOcupado;
+        public event RamalNaoAtendeu onRamalNaoAtendeu;
+        public event RamalRegistrado onRamalRegistrado;
+        public event RamalDesRegistrado onRamalDesRegistrado;
+
+        public event DestinoAtendeu onDestinoAtendeu;
+        public event DestinoDiscando onDestinoDiscando;
+        public event DestinoChamando onDestinoChamando;
+        public event DestinoDesligou onDestinoDesligou;
+        public event DestinoOcupado onDestinoOcupado;
+        public event DestinoNaoAtendeu onDestinoNaoAtendeu;
+
+        public event EntrouEmPausa onEntrouEmPausa;
+        public event SaiuDePausa onSaiuDePausa;
+
+        public event RamaisStatus onRamaisStatus;
+        public event QueueMember onQueueMember;
+        public event QueueParams onQueueParams;
+        public event Erro onError;
+        public event OutputLogs OnOutputLogs;
+
+        private void QueueMember(string[] Linhas)
+        {
+            long Location = 0;
+            string Queue = string.Empty;
+            QueueMemberStatus Status = QueueMemberStatus.AST_DEVICE_UNKNOWN;
+
+            foreach (string Linha in Linhas)
+            {
+                var linhaSeparado = Linha.Split(':');
+
+                var Chave = linhaSeparado[0].Trim();
+                var Valor = linhaSeparado[1].Trim();
+
+                switch (Chave)
+                {
+                    case "Location":
+                        if (!long.TryParse(Valor.Replace("sip/", ""), out Location))
+                        {
+                            SaidaMensagem("Erro ao Encontrar Canal SIP. CANAL: {0}", LoggerType.ERRO);
+                            continue;
+                        }
+                        break;
+
+                    case "Queue":
+                        Queue = Valor;
+                        break;
+
+                    case "Status":
+                        switch (Valor.ToInt16())
+                        {
+                            case 0:
+                                Status = QueueMemberStatus.AST_DEVICE_UNKNOWN;
+                                break;
+                            case 1:
+                                Status = QueueMemberStatus.AST_DEVICE_NOT_INUSE;
+                                break;
+                            case 2:
+                                Status = QueueMemberStatus.AST_DEVICE_INUSE;
+                                break;
+                            case 3:
+                                Status = QueueMemberStatus.AST_DEVICE_BUSY;
+                                break;
+                            case 4:
+                                Status = QueueMemberStatus.AST_DEVICE_INVALID;
+                                break;
+                            case 5:
+                                Status = QueueMemberStatus.AST_DEVICE_UNAVAILABLE;
+                                break;
+                            case 6:
+                                Status = QueueMemberStatus.AST_DEVICE_RINGING;
+                                break;
+                            case 7:
+                                Status = QueueMemberStatus.AST_DEVICE_RINGINUSE;
+                                break;
+                            case 8:
+                                Status = QueueMemberStatus.AST_DEVICE_ONHOLD;
+                                break;
+
+                            default:
+                                Erro(new AsteriskClientException(string.Format("Queue Member Status não definido para {0}", Valor)));
+                                break;
+
+                        }
+                        break;
+                }
+            }
+
+            QueueMember(Location, Queue, Status);
+        }
+
+        private void QueueParams(string[] Linhas)
+        {
+            QueueParamsEntity queueParamsEntity = new QueueParamsEntity();
+            foreach (string Linha in Linhas)
+            {
+                var linhaSeparado = Linha.Split(':');
+
+                var Chave = linhaSeparado[0].Trim();
+                var Valor = linhaSeparado[1].Trim();
+
+                switch (Chave)
+                {
+                    case "Queue": queueParamsEntity.Queue = Valor;
+                        break;
+                    case "Max": queueParamsEntity.Max = Valor.ToInt32();
+                        break;
+                    case "Strategy": queueParamsEntity.Strategy = Valor;
+                        break;
+                    case "Calls": queueParamsEntity.Calls = Valor.ToInt32();
+                        break;
+                    case "Holdtime": queueParamsEntity.Holdtime = Valor.ToInt32();
+                        break;
+                    case "TalkTime": queueParamsEntity.TalkTime = Valor.ToInt32();
+                        break;
+                    case "Completed": queueParamsEntity.Completed = Valor.ToInt32();
+                        break;
+                    case "Abandoned": queueParamsEntity.Abandoned = Valor.ToInt32();
+                        break;
+                    case "ServiceLevel": queueParamsEntity.ServiceLevel = Valor.ToInt32();
+                        break;
+                    case "ServicelevelPerf": queueParamsEntity.ServicelevelPerf = Valor.ToDecimal();
+                        break;
+                    case "Weight": queueParamsEntity.Weight = Valor.ToInt32();
+                        break;
+                }
+            }
+            QueueParams(queueParamsEntity);
+        }
+
+        private void peerStatus(string[] Linhas)
+        {
+            long peer = 0;
+            string status = string.Empty;
+
+            foreach (string Linha in Linhas)
+            {
+                var linhaSeparado = Linha.Split(':');
+                var Chave = linhaSeparado[0].Trim();
+                var Valor = linhaSeparado[1].Trim();
+
+                switch (Chave)
+                {
+                    case "Peer":
+                        if (!long.TryParse(Valor.Replace("SIP/", ""), out peer))
+                        {
+                            throw new AsteriskClientException("Erro ao Encontrar Canal SIP");
+                        }
+                        break;
+
+                    case "PeerStatus":
+                        status = Valor;
+                        break;
+                }
+            }
+
+            if (status == "Registered")
+                RamalRegistrado(peer);
+            else
+                RamalDesRegistrado(peer);
+        }
+
+        /// <summary>
+        /// Eventos Dos Status dos Ramais no Asterisk
+        /// </summary>
+        /// <param name="Linhas">Array com as Linhas do Bloco de Evento</param>
+        private void inuse(string[] Linhas)
+        {
+            var LRamaisStatus = new List<RamalStatus>();
+            for (var i = 3; i < Linhas.Length - 1; i++)
+            {
+                var LinhaSeparado = new string[3];
+
+                LinhaSeparado[0] = Linhas[i].Substring(0, 26).Trim();
+                LinhaSeparado[1] = Linhas[i].Substring(26, 16).Trim();
+                LinhaSeparado[2] = Linhas[i].Substring(42, Linhas[i].Length - 42).Trim();
+
+                long Ramal = 0;
+                var ramalStatus = new RamalStatus();
+                if (!long.TryParse(LinhaSeparado[0], out Ramal))
+                {
+                    throw new AsteriskClientException("Erro ao Pegar Ramal");
+                }
+                ramalStatus.Ramal = Ramal;
+
+                switch (LinhaSeparado[1])
+                {
+                    case "0/0/0":
+                        ramalStatus.Status = PeerStatus.Aguardando;
+                        break;
+                    case "1/0/0":
+                        ramalStatus.Status = PeerStatus.Atendendo;
+                        break;
+                    case "1/1/0":
+                        ramalStatus.Status = PeerStatus.Chamando;
+                        break;
+                    default:
+                        throw new AsteriskClientException("Status do Ramal não definido");
+                        break;
+                }
+
+                LRamaisStatus.Add(ramalStatus);
+            }
+
+            RamaisStatus(LRamaisStatus);
+        }
+
+        /// <summary>
+        /// Eventos relacionado a QueueMemberPaused
+        /// </summary>
+        /// <param name="Linhas">Array com as Linhas do Bloco de Evento</param>
+        private void QueueMemberPaused(string[] Linhas)
+        {
+            long Location = 0;
+            var Pausa = true;
+
+            foreach (string Linha in Linhas)
+            {
+                var linhaSeparado = Linha.Split(':');
+
+                var Chave = linhaSeparado[0].Trim();
+                var Valor = linhaSeparado[1].Trim();
+
+                switch (Chave)
+                {
+                    case "Location":
+                        if (!long.TryParse(Valor.Replace("SIP/", ""), out Location))
+                        {
+                            throw new AsteriskClientException("Erro ao Encontrar Canal SIP");
+                        }
+                        break;
+
+                    case "Paused":
+                        if (Valor == "1")
+                        {
+                            Pausa = true;
+                        }
+                        else
+                        {
+                            Pausa = false;
+                        }
+                        break;
+                }
+            }
+
+            if (Pausa)
+            {
+                EntrouEmPausa(Location);
+            }
+            else
+            {
+                SaiuDePausa(Location);
+            }
+        }
+
+        /// <summary>
+        /// Eventos relacionado ao Estado da Ligação
+        /// </summary>
+        /// <param name="Linhas">Array com as Linhas do Bloco de Evento</param>
+        private void NewState(string[] Linhas)
+        {
+            var Channel = string.Empty;
+            var CallerIDNum = string.Empty;
+            var ChannelState = 0;
+            var ConnectedLineNum = string.Empty;
+
+
+            foreach (string Linha in Linhas)
+            {
+                var linhaSeparado = Linha.Split(':');
+
+                var Chave = linhaSeparado[0].Trim();
+                var Valor = linhaSeparado[1].Trim();
+
+                switch (Chave)
+                {
+                    case "Channel":
+                        Channel = Valor;
+                        break;
+
+                    case "ChannelState":
+                        if (!int.TryParse(Valor, out ChannelState))
+                        {
+                            throw new AsteriskClientException("Erro ao Converter ChannelState");
+                        }
+                        break;
+
+                    case "CallerIDNum":
+                        CallerIDNum = Valor;
+                        break;
+
+                    case "ConnectedLineNum":
+                        ConnectedLineNum = Valor;
+                        break;
+                }
+            }
+
+            if (Channel.Contains("SIP"))
+            {
+                long Ramal = 0;
+                if (!long.TryParse(Channel.Substring(4, Channel.IndexOf('-') - 4), out Ramal))
+                {
+                    throw new AsteriskClientException("Erro ao Encontrar Canal SIP");
+                }
+                switch (ChannelState)
+                {
+                    case 6:
+                        //RamalAtendeu(Ramal, ConnectedLineNum);
+                        break;
+
+
+                    case 5:
+                        RamalChamando(Ramal);
+                        break;
+
+                    case 4:
+                        RamalChamando(Ramal);
+                        break;
+
+                    case 3:
+                        RamalDiscando(Ramal);
+                        break;
+                }
+            }
+            else
+            {
+                switch (ChannelState)
+                {
+                    case 6:
+                        DestinoAtendeu(CallerIDNum);
+                        break;
+
+                    case 5:
+                        DestinoChamando(CallerIDNum);
+                        break;
+
+                    case 4:
+                        DestinoChamando(CallerIDNum);
+                        break;
+
+                    case 3:
+                        DestinoDiscando(CallerIDNum);
+                        break;
+                }
+            }
+        }
+
+        private void Bridge(string[] Linhas)
+        {
+            var Channel2 = string.Empty; //Ramal
+            var CallerID1 = string.Empty; //Destino
+
+
+            foreach (string Linha in Linhas)
+            {
+                var linhaSeparado = Linha.Split(':');
+
+                var Chave = linhaSeparado[0].Trim();
+                var Valor = linhaSeparado[1].Trim();
+
+                switch (Chave)
+                {
+                    case "Channel2":
+                        Channel2 = Valor;
+                        break;
+
+                    case "CallerID1":
+                        CallerID1 = Valor;
+                        break;
+                }
+            }
+
+            RamalAtendeu(Channel2.Substring(4, Channel2.IndexOf('-') - 4).ToInt64(), CallerID1);
+
+        }
+
+        /// <summary>
+        /// Eventos relacionado ao Desligamento da Ligação
+        /// </summary>
+        /// <param name="Linhas">Array com as Linhas do Bloco de Evento</param>
+        private void HangUp(string[] Linhas)
+        {
+            var Channel = string.Empty;
+            var CallerIDNum = string.Empty;
+            var Cause = 0;
+
+            foreach (string Linha in Linhas)
+            {
+                var linhaSeparado = Linha.Split(':');
+
+                var Chave = linhaSeparado[0].Trim();
+                var Valor = linhaSeparado[1].Trim();
+
+                switch (Chave)
+                {
+                    case "Channel":
+                        Channel = Valor;
+                        break;
+
+                    case "Cause":
+                        if (!int.TryParse(Valor, out Cause))
+                        {
+                            throw new AsteriskClientException("Erro ao Converter Causa do Desligamento");
+                        }
+                        break;
+
+                    case "CallerIDNum":
+                        CallerIDNum = Valor;
+                        break;
+                }
+            }
+
+
+            if (Channel.Contains("SIP"))
+            {
+                long Ramal = 0;
+                if (!long.TryParse(Channel.Substring(4, Channel.IndexOf('-') - 4), out Ramal))
+                {
+                    throw new AsteriskClientException("Erro ao Encontrar Canal SIP");
+                }
+                switch ((CausesDisconnection)Cause)
+                {
+                    case CausesDisconnection.AST_CAUSE_USER_BUSY:
+                        RamalOcupado(Ramal);
+                        break;
+                    case CausesDisconnection.AST_CAUSE_NO_ANSWER:
+                        RamalNaoAtendeu(Ramal);
+                        break;
+                    default:
+                        RamalDesligou(Ramal, Enum.GetName(typeof(CausesDisconnection), Cause));
+                        break;
+                }
+            }
+            else
+            {
+                switch ((CausesDisconnection)Cause)
+                {
+                    case CausesDisconnection.AST_CAUSE_USER_BUSY:
+                        DestinoOcupado(CallerIDNum);
+                        break;
+                    case CausesDisconnection.AST_CAUSE_NO_ANSWER:
+                        DestinoNaoAtendeu(CallerIDNum);
+                        break;
+                    default:
+                        DestinoDesligou(CallerIDNum, Enum.GetName(typeof(CausesDisconnection), Cause));
+                        break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Eventos relacionado ao Id de Ligação
+        ///
+        /// Não Implementado por falta de Utilidade no Momento
+        /// </summary>
+        /// <param name="Linhas">Array com as Linhas do Bloco de Evento</param>
+        private void NewCallerId(string[] Linhas)
+        {
+        }
+        #endregion
+
+        public void Dispose()
+        {
+
+        }
+    }
+
+    public class AsteriskClientException : Exception
+    {
+        public AsteriskClientException(string mensagem)
+            : base(mensagem)
+        {
+        }
+    }
+
+    public static class RandomFactory
+    {
+        private static Random globalRandom = new Random();
+
+        public static Random Create()
+        {
+            lock (globalRandom)
+            {
+                Random newRandom = new Random(globalRandom.Next());
+                return newRandom;
+            }
+        }
+    }
+}

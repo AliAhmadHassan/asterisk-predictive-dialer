@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{22231A78-18B7-40D3-9866-6E517E6FAD1F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ProjetoTeste</RootNamespace>
+    <AssemblyName>ProjetoTeste</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="nunit.framework, Version=2.6.2.12296, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="TesteDTO.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Silver.AsteriskClient\Silver.AsteriskClient.csproj">
+      <Project>{F1E83356-42AE-4332-8FFC-9D5986351F2B}</Project>
+      <Name>Silver.AsteriskClient</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Silver.BLL\Silver.BLL.csproj">
+      <Project>{33A17419-E7D5-4F9E-A48C-7AEB217B9EA9}</Project>
+      <Name>Silver.BLL</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Silver.Common\Silver.Common.csproj">
+      <Project>{D5ED9466-7B35-4E69-AE29-218258E2E789}</Project>
+      <Name>Silver.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Silver.DAL\Silver.DAL.csproj">
+      <Project>{96E34614-306B-4239-ADE1-FE41AB9234CF}</Project>
+      <Name>Silver.DAL</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Silver.DTO\Silver.DTO.csproj">
+      <Project>{F992D3AF-D203-43BA-A06D-03F5D406F93E}</Project>
+      <Name>Silver.DTO</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Silver.Espectro\Silver.Espectro.csproj">
+      <Project>{329A6B52-4637-4D17-BAF7-04D7A67076FE}</Project>
+      <Name>Silver.Espectro</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Silver.FtpClient\Silver.FtpClient.csproj">
+      <Project>{344A481B-2A06-43ED-BE60-E2895AC6B701}</Project>
+      <Name>Silver.FtpClient</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Silver.RoboDiscagem\Silver.RoboDiscagem.csproj">
+      <Project>{C4DEB40B-216E-44F2-ABC4-4E606E3E0F12}</Project>
+      <Name>Silver.RoboDiscagem</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Silver.UI.Web.Controls\Silver.UI.Web.Controls.csproj">
+      <Project>{78768D18-24CF-45E7-BFB6-5843959C9B67}</Project>
+      <Name>Silver.UI.Web.Controls</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{59162F5F-AE53-4725-BA11-F8E22443780E}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Silver.Testes.Discador</RootNamespace>
+    <AssemblyName>Silver.Testes.Discador</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Silver.AsteriskClient\Silver.AsteriskClient.csproj">
+      <Project>{F1E83356-42AE-4332-8FFC-9D5986351F2B}</Project>
+      <Name>Silver.AsteriskClient</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Silver.BLL\Silver.BLL.csproj">
+      <Project>{33A17419-E7D5-4F9E-A48C-7AEB217B9EA9}</Project>
+      <Name>Silver.BLL</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Silver.Common\Silver.Common.csproj">
+      <Project>{D5ED9466-7B35-4E69-AE29-218258E2E789}</Project>
+      <Name>Silver.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Silver.DAL\Silver.DAL.csproj">
+      <Project>{96E34614-306B-4239-ADE1-FE41AB9234CF}</Project>
+      <Name>Silver.DAL</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Silver.DTO\Silver.DTO.csproj">
+      <Project>{F992D3AF-D203-43BA-A06D-03F5D406F93E}</Project>
+      <Name>Silver.DTO</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Silver.FtpClient\Silver.FtpClient.csproj">
+      <Project>{344A481B-2A06-43ED-BE60-E2895AC6B701}</Project>
+      <Name>Silver.FtpClient</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Silver.Logger\Silver.Logger.csproj">
+      <Project>{8EDF6D3E-0B50-4102-ADEA-457906B17A00}</Project>
+      <Name>Silver.Logger</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

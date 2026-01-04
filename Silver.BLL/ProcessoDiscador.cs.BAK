@@ -1,0 +1,476 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Silver.AsteriskClient;
+using Silver.Common;
+using System.Threading;
+using Silver.DTO;
+
+namespace Silver.BLL
+{
+    public class ProcessoDiscador
+    {
+        #region Fields
+
+        private DTO.StatusProcessoDiscador status_discador = DTO.StatusProcessoDiscador.Iniciado;
+        public event OutputLogs OnOutputlogs;
+        private object monitor_thread = new object();
+        List<string> LDDD11 = new List<string>();
+
+        #endregion
+
+        #region Propriedades
+
+        public ProcessoCampanha processoCampanha { get; set; }
+        public ProcessoAsterisk processo_asterisk { get; set; }
+        public DTO.Campanha Campanha { get; set; }
+
+        #endregion
+
+        #region Métodos void
+        private void Outputlogs(string msg)
+        {
+            if (OnOutputlogs != null)
+                OnOutputlogs(msg);
+        }
+
+        public void AtualizarStatus(DTO.StatusProcessoDiscador status)
+        {
+            if (this.processo_asterisk == null)
+                new ArgumentNullException("processo_asterisk");
+
+            status_discador = status;
+            processo_asterisk.Status = status;
+
+            switch (status)
+            {
+                case Silver.DTO.StatusProcessoDiscador.Iniciado:
+                    //TODO - Comentado em 23/09/2013     
+                    //IniciarProcesso();
+                    break;
+                case Silver.DTO.StatusProcessoDiscador.Executando:
+
+                    break;
+                case Silver.DTO.StatusProcessoDiscador.Parado:
+
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        //public void IniciarProcesso()
+        //{
+        //    if (this.Campanha == null)
+        //        new ArgumentNullException("Campanha", new Exception("Campanha para iniciar o processo não foi informada ou está nula") { });
+
+        //    processoCampanha.InicializarOperadores();
+        //    processoCampanha.InicializarCarga();
+
+        //    processo_asterisk.Operadores = processoCampanha.Operadores;
+        //    processo_asterisk.Campanha = processoCampanha.Campanha;
+        //    processo_asterisk.Cargas = processoCampanha.Cargas;
+        //    processo_asterisk.Telefones = processoCampanha.Telefones;
+
+        //    AtualizarStatus(DTO.StatusProcessoDiscador.Executando);
+        //    processo_asterisk.cliente_asterisk.StatusFila(processoCampanha.Campanha.Nome);
+        //}
+
+        /// <summary>
+        /// 1 - Validar e Configurar Campanha
+        /// 2 - Carregar Operadores
+        /// 3 - Carregar Carga
+        /// 4 - Tratar Telefone
+        /// 5 - Instanciar e Configurar classe 'ProcessoAsterisk' com os métodos de discagem do discador
+        /// 6 - Configurar classe 'ProcessoAsterisk' com as informações da campanha, operadores, carga e atualizar status do discador
+        /// </summary>
+        /// <param name="campanha"></param>
+        public void IniciarProcesso(object campanha)
+        {
+            this.Campanha = (DTO.Campanha)campanha;
+
+            //Carregar informações da campanha
+            processoCampanha = new ProcessoCampanha(this.Campanha);
+            processoCampanha.InicializarOperadores();
+            processoCampanha.InicializarCarga();
+
+            //Formatar informações dos telefones
+            TrataTelefone();
+
+            //Carregar Informarções para a classe Proxy do asterisk
+
+            //Uma instancia da classe de escuta
+            processo_asterisk = new ProcessoAsterisk(DiscarMaisUmTelefone, GerarLigacoesCampanha, DiscagemInicial);
+
+            //Quem são os operadores
+            processo_asterisk.Operadores = processoCampanha.Operadores;
+
+            //Qual Campanha deve ser escutada
+            processo_asterisk.Campanha = processoCampanha.Campanha;
+
+            //Qual é a carga(Clientes)
+            processo_asterisk.Cargas = processoCampanha.Cargas;
+
+            //Qualis são os telefones
+            processo_asterisk.Telefones = processoCampanha.Telefones;
+
+            //Atualizar o status do discador
+            processo_asterisk.Status = DTO.StatusProcessoDiscador.Executando;
+
+            //Método de escuta de logs do cliente asterisk
+            processo_asterisk.OnOutputLogs += processo_asterisk_OnOutputLogs;
+            processo_asterisk.AlteracaoStatus += processo_asterisk_AlteracaoStatus;
+
+            //Executa o método statusfila para iniciar a discagem para a campanha, a saída deste método será o
+            //'clienteAsterisk_onQueueMember' que está no objeto 'processo_asterisk'
+
+            processo_asterisk.cliente_asterisk.StatusFila(processoCampanha.Campanha.Nome);
+            status_discador = DTO.StatusProcessoDiscador.Executando;
+            processo_asterisk.cliente_asterisk.StatusFila(processoCampanha.Campanha.Nome);
+        }
+
+        private void processo_asterisk_AlteracaoStatus(DTO.StatusProcessoDiscador status)
+        {
+            switch (status)
+            {
+                case Silver.DTO.StatusProcessoDiscador.Iniciado:
+                    break;
+                case Silver.DTO.StatusProcessoDiscador.Executando:
+                    break;
+                case Silver.DTO.StatusProcessoDiscador.Parado:
+                    break;
+                case Silver.DTO.StatusProcessoDiscador.Erro:
+                    break;
+                default:
+                    break;
+            }
+
+            this.status_discador = status;
+        }
+
+        private void processo_asterisk_OnOutputLogs(string msg)
+        {
+            Outputlogs(msg);
+        }
+
+
+
+        [Obsolete("2013-09-19 - Mudamos o processo para gerar ligações com QueueParams")]
+        protected void GerarLigacoes(long Ramal, long Agressividade)
+        {
+            var usuario = processoCampanha.Operadores.Where(c => c.Ramal.Equals(Ramal)).FirstOrDefault();
+            GerarLigacoesCampanha(Agressividade);
+        }
+
+        protected void DiscarMaisUmTelefone(string Telefone)
+        {
+            DTO.CargaTelefoneRobo telefone = processoCampanha.Telefones.Where(c => c.TelefoneTratado.Equals(Telefone)).FirstOrDefault();
+            if (telefone.Status != (int)DTO.TelefoneStatus.Atendido)
+                GerarLigacoesCampanha(1);
+        }
+        protected void GerarLigacoesCampanha(long Agressividade)
+        {
+            Agressividade = Agressividade == 0 ? processoCampanha.Campanha.Agressividade : Agressividade;
+            List<DTO.CargaTelefoneRobo> consultaTelefones = ConsultaTelefones(Agressividade);
+
+            List<Discagem> discagens = new List<Discagem>();
+            foreach (var t in consultaTelefones)
+            {
+                //--TODO Adicionar no DTO.CargaTelefoneRobo protocolo para não necessitar rodar este processo novamente
+                var protocolo = DefineRotas(t);
+                var d = new Discagem();
+                d.Protocolo = protocolo.ToString();
+                d.Telefone = t.TelefoneTratado;
+                d.IdCampanha = processoCampanha.Campanha.Id.ToString();
+                d.Campanha = processoCampanha.Campanha.Nome;
+                d.IdTelefone = t.TelId.ToString();
+                d.TipoTelefone = t.IdTipo.ToString();
+                discagens.Add(d);
+            }
+            
+            processo_asterisk.cliente_asterisk.Discar(discagens.ToArray());
+        }
+
+        protected void TrataTelefone()
+        {
+            foreach (var c in processoCampanha.Telefones)
+                c.TelefoneTratado = TrataTelefone(c);
+        }
+
+        protected void DiscagemInicial()
+        {
+            foreach (var u in processoCampanha.Operadores)
+                if (u.Status == DTO.EstadoUsuario.Aguardando)
+                    GerarLigacoes(u.Ramal, 1);
+        }
+
+        protected void DiscagemInicial(long ramal)
+        {
+            var user = processoCampanha.Operadores.Where(c => c.Ramal.Equals(ramal)).FirstOrDefault();
+            if (user != null && user.Status == DTO.EstadoUsuario.Aguardando)
+                GerarLigacoes(ramal, 1);
+        }
+        #endregion
+
+        public ProcessoDiscador()
+        {
+            #region Lista para utilizar DDD 11
+            LDDD11.Add("4136");
+            LDDD11.Add("4204");
+            LDDD11.Add("2123");
+            LDDD11.Add("2144");
+            LDDD11.Add("2187");
+            LDDD11.Add("2198");
+            LDDD11.Add("2202");
+            LDDD11.Add("2588");
+            LDDD11.Add("3799");
+            LDDD11.Add("4653");
+            LDDD11.Add("4654");
+            LDDD11.Add("4655");
+            LDDD11.Add("2119");
+            LDDD11.Add("2427");
+            LDDD11.Add("3402");
+            LDDD11.Add("4012");
+            LDDD11.Add("4411");
+            LDDD11.Add("4412");
+            LDDD11.Add("4413");
+            LDDD11.Add("4414");
+            LDDD11.Add("4415");
+            LDDD11.Add("4417");
+            LDDD11.Add("4418");
+            LDDD11.Add("4494");
+            LDDD11.Add("4012");
+            LDDD11.Add("4891");
+            LDDD11.Add("2277");
+            LDDD11.Add("2473");
+            LDDD11.Add("3404");
+            LDDD11.Add("4031");
+            LDDD11.Add("4032");
+            LDDD11.Add("4033");
+            LDDD11.Add("4035");
+            LDDD11.Add("4481");
+            LDDD11.Add("4603");
+            LDDD11.Add("4409");
+            LDDD11.Add("4528");
+            LDDD11.Add("4529");
+            LDDD11.Add("4711");
+            LDDD11.Add("4717");
+            LDDD11.Add("4658");
+            LDDD11.Add("3408");
+            LDDD11.Add("4487");
+            LDDD11.Add("4534");
+            LDDD11.Add("4538");
+            LDDD11.Add("4894");
+            LDDD11.Add("2136");
+            LDDD11.Add("4592");
+            LDDD11.Add("4593");
+            LDDD11.Add("4409");
+            LDDD11.Add("4529");
+            LDDD11.Add("4017");
+            LDDD11.Add("4539");
+            LDDD11.Add("2136");
+            LDDD11.Add("2152");
+            LDDD11.Add("2434");
+            LDDD11.Add("2816");
+            LDDD11.Add("2882");
+            LDDD11.Add("3308");
+            LDDD11.Add("3378");
+            LDDD11.Add("3379");
+            LDDD11.Add("3395");
+            LDDD11.Add("3446");
+            LDDD11.Add("3963");
+            LDDD11.Add("3964");
+            LDDD11.Add("4491");
+            LDDD11.Add("4492");
+            LDDD11.Add("4497");
+            LDDD11.Add("4521");
+            LDDD11.Add("4522");
+            LDDD11.Add("4523");
+            LDDD11.Add("4525");
+            LDDD11.Add("4526");
+            LDDD11.Add("4527");
+            LDDD11.Add("4531");
+            LDDD11.Add("4532");
+            LDDD11.Add("4535");
+            LDDD11.Add("4581");
+            LDDD11.Add("4583");
+            LDDD11.Add("4584");
+            LDDD11.Add("4587");
+            LDDD11.Add("4589");
+            LDDD11.Add("4599");
+            LDDD11.Add("4601");
+            LDDD11.Add("4815");
+            LDDD11.Add("4816");
+            LDDD11.Add("4014");
+            LDDD11.Add("4406");
+            LDDD11.Add("4597");
+            LDDD11.Add("4895");
+            LDDD11.Add("4037");
+            LDDD11.Add("4018");
+            LDDD11.Add("4896");
+            LDDD11.Add("4036");
+            LDDD11.Add("4405");
+            LDDD11.Add("4021");
+            LDDD11.Add("4029");
+            LDDD11.Add("4602");
+            LDDD11.Add("4714");
+            LDDD11.Add("4716");
+            LDDD11.Add("4711");
+            LDDD11.Add("4713");
+            LDDD11.Add("4719");
+            LDDD11.Add("4784");
+            LDDD11.Add("2434");
+            LDDD11.Add("3378");
+            LDDD11.Add("3395");
+            LDDD11.Add("4493");
+            LDDD11.Add("4595");
+            #endregion
+
+            if (processo_asterisk != null)
+                processo_asterisk.Status = status_discador;
+        }
+
+        /// <summary>
+        /// Acompanhamento do status do client asterisk
+        /// </summary>
+        /// <param name="status"></param>
+
+        #region Métodos com Retorno
+        protected string TrataTelefone(DTO.CargaTelefone Tel)
+        {
+            var Retorno = string.Empty;
+
+            try
+            {
+                if ((int.Parse(Tel.Ddd) == 11) && (!LDDD11.Contains(Tel.Telefone.ToString().Substring(0, 4))))
+                {
+                    Retorno = Tel.Telefone;
+                }
+                else
+                {
+                    var protocolo = DefineRotas(new DTO.CargaTelefoneRobo()
+                    {
+                        Ddd = Tel.Ddd,
+                        Telefone = Tel.Telefone
+                    });
+
+                    Retorno = OperadoraDDD[protocolo] + Tel.Ddd + Tel.Telefone;
+                }
+            }
+            catch (Exception ex)
+            {
+                Outputlogs(string.Format("Telefone não pode ser tratado. DDD: {0}, Número: {1}, Id Tipo: {2}, Id Carga:{3}, Mensagem do Sistema: {4}", Tel.Ddd, Tel.Telefone, Tel.IdTipo, Tel.IdCarga, ex.Message));
+                return string.Empty;
+            }
+
+            return Retorno;
+        }
+
+        #region Protocolos
+        protected SortedList<Protocolo, string> OperadoraDDD =
+           new SortedList<Protocolo, string>() {
+            { Protocolo.Algar, "015" },
+            { Protocolo.GVT, "015" },
+            { Protocolo.Mahatel, "015" },
+            { Protocolo.Nexus, "015" },
+            { Protocolo.Pontal, "015" },
+            { Protocolo.Telefonica, "015" },
+            { Protocolo.Transit, "015" }};
+        #endregion
+
+        protected Protocolo DefineRotas(DTO.CargaTelefoneRobo Tel)
+        {
+            //TODO - Montar Rota com prioridade menor quanto todo o canal estiver ocupado.
+
+            var rotas = new BLL.Rota().Obter(true);
+            List<DTO.Rota> prioridadeRota = new List<DTO.Rota>();
+            if ("6789".Contains(Tel.Telefone[0])) //Celular
+            {
+                if (Tel.Ddd.ToInt16() >= 20) //VC3
+                    prioridadeRota = rotas.Where(c => c.IdTarifaTipo.Equals(5)).OrderBy(c => c.Prioridade).ToList();
+                else if (Tel.Ddd.ToInt16() >= 11) //VC2
+                    prioridadeRota = rotas.Where(c => c.IdTarifaTipo.Equals(4)).OrderBy(c => c.Prioridade).ToList();
+                else //VC1
+                    prioridadeRota = rotas.Where(c => c.IdTarifaTipo.Equals(6)).OrderBy(c => c.Prioridade).ToList();
+            }
+            else //Fixo
+            {
+                if (Tel.Ddd.ToInt16() >= 20) //Inter
+                    prioridadeRota = rotas.Where(c => c.IdTarifaTipo.Equals(3)).OrderBy(c => c.Prioridade).ToList();
+                else if (Tel.Ddd.ToInt16() >= 11) //Intra
+                    prioridadeRota = rotas.Where(c => c.IdTarifaTipo.Equals(2)).OrderBy(c => c.Prioridade).ToList();
+                else //Local
+                    prioridadeRota = rotas.Where(c => c.IdTarifaTipo.Equals(1)).OrderBy(c => c.Prioridade).ToList();
+
+            }
+
+            Protocolo Retorno = Protocolo.Telefonica;
+
+            switch (prioridadeRota[0].IdOperadora)
+            {
+                case 4: Retorno = Protocolo.Telefonica;
+                    break;
+                case 5: Retorno = Protocolo.GVT;
+                    break;
+                case 6: Retorno = Protocolo.Transit;
+                    break;
+                case 7: Retorno = Protocolo.Mahatel;
+                    break;
+                case 8: Retorno = Protocolo.Algar;
+                    break;
+                case 9: Retorno = Protocolo.Nexus;
+                    break;
+                case 10: Retorno = Protocolo.Pontal;
+                    break;
+            }
+
+            return Retorno;
+        }
+
+        public DTO.StatusProcessoDiscador ObterStatus()
+        {
+            return status_discador;
+        }
+
+        protected List<DTO.CargaTelefoneRobo> ConsultaTelefones(long Agressividade)
+        {
+            var Retorno = new List<DTO.CargaTelefoneRobo>();
+            var Auxcargas = processoCampanha.Cargas.Where(c => (c.IdCampanha.Equals(processoCampanha.Campanha.Id)) && (c.Status == (int)DTO.TelefoneStatus.Aguardando)).OrderByDescending(w => w.Id).ToList();
+
+            //if(Auxcargas.Count == 0)
+            //TODO - Montar metodo para renovar a Carga e Telefone
+
+            foreach (var carga in Auxcargas)
+            {
+                //var Auxtelefones = processoCampanha.Telefones
+                //    .Where(c => c.IdCarga.Equals(carga.Id) && c.Status.Equals((int)DTO.TelefoneStatus.Aguardando))
+                //    .OrderByDescending(w => w.Id).ToList()
+                //    .Take(Agressividade.ToInt32())
+                //    .ToList();
+
+                var Auxtelefones = (from t in processoCampanha.Telefones
+                                    where t.IdCarga == carga.Id && t.Status == (int)DTO.TelefoneStatus.Aguardando
+                                    select t).Take(Agressividade.ToInt32()).ToList<DTO.CargaTelefoneRobo>();
+
+                if (Auxtelefones.Count == 0)
+                {
+                    carga.Status = (int)DTO.TelefoneStatus.SemSucessoNaDiscagem;
+                    continue;
+                }
+
+                foreach (var t in Auxtelefones)
+                {
+                    Retorno.Add(t as DTO.CargaTelefoneRobo);
+                    t.Status = (int)DTO.TelefoneStatus.EmAndamento;
+                }
+
+                if (Retorno.Count >= Agressividade)
+                    break;
+            };
+
+            return Retorno;
+        }
+        #endregion
+    }
+}
